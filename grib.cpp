@@ -1,6 +1,9 @@
 #include <string>
 #include <sstream>
+#include <fstream>
+#include <algorithm>
 #include <iomanip>
+#include <iterator>
 #include <vector>
 #include <cstdio>
 #include <cerrno>
@@ -59,7 +62,7 @@ class GRIB
 	private:
 		typedef std::vector<std::string> Levels;
 		typedef std::vector<std::string> Vars;
-		typedef std::vector<char> Data;
+		typedef std::vector<uint8_t> Data;
 	private:
 		Levels levels;
 		Vars vars;
@@ -103,6 +106,9 @@ class GRIB
 
 		std::string url() const;
 		int fetch();
+
+		void write_data(std::ostream &) const;
+		friend std::ostream & operator<<(std::ostream &, const GRIB &);
 };
 
 GRIB::GRIB(Grid grid)
@@ -333,16 +339,18 @@ std::string GRIB::error_string(int code)
 	return curl_easy_strerror(static_cast<CURLcode>(code));
 }
 
-int main(int argc, char ** argv)
+void GRIB::write_data(std::ostream & os) const
 {
-/*
-	if (argc == 2) {
-		std::string t(argv[1]);
-		printf("[%s]\n", t.c_str());
-	}
-	return 0;
-*/
+	std::copy(data.begin(), data.end(), std::ostream_iterator<Data::value_type>(os));
+}
 
+std::ostream & operator<<(std::ostream & os, const GRIB & grib)
+{
+	return os << grib.url();
+}
+
+int main(int, char **)
+{
 	for (int i = 0; i < 6; i += 3) {
 		GRIB grib(GRIB::GRID_2P5);
 		grib.set(GRIB::Region(35, 5, -15, 15));
@@ -361,6 +369,13 @@ int main(int argc, char ** argv)
 			printf("ERROR: %s\n", GRIB::error_string(errno).c_str());
 			break;
 		}
+
+		std::ofstream ofs("test.grb2");
+		if (!ofs) {
+			printf("ERROR: cannot open file\n");
+			break;
+		}
+		grib.write_data(ofs);
 	}
 
 	return 0;
