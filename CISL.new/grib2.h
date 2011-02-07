@@ -1,5 +1,5 @@
-#ifndef __UNPACKGRIB2__H__
-#define __UNPACKGRIB2__H__
+#ifndef __GRIB2__H__
+#define __GRIB2__H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -54,7 +54,8 @@ typedef struct {
 		int emo;
 		int edy;
 		int etime;
-		int num_ranges,nmiss;
+		int num_ranges;
+		int nmiss;
 		int * proc_code;
 		int * incr_type;
 		int * time_unit;
@@ -74,14 +75,15 @@ typedef struct {
 
 typedef struct {
 	GRIBMetadata md;
-	double *gridpoints;
+	double * gridpoints;
 } GRIB2Grid;
 
 typedef struct {
 	unsigned char * buffer;
 	int offset;  /* offset in bytes to next GRIB2 section */
 	int total_len;
-	int disc,ed_num;
+	int disc;
+	int ed_num;
 	int center_id;
 	int sub_center_id;
 	int table_ver;
@@ -97,16 +99,6 @@ typedef struct {
 	int num_grids;
 	GRIB2Grid * grids;
 } GRIBMessage;
-
-int grib2_unpackIS(FILE * fp,GRIBMessage * grib_msg);
-void grib2_unpackIDS(GRIBMessage * grib_msg);
-void grib2_unpackLUS(GRIBMessage * grib);
-void grib2_unpackGDS(GRIBMessage * grib_msg);
-void grib2_unpackPDS(GRIBMessage * grib_msg);
-void grib2_unpackDRS(GRIBMessage * grib_msg);
-void grib2_unpackBMS(GRIBMessage * grib_msg);
-void grib2_unpackDS(GRIBMessage * grib_msg, int grid_num);
-int grib2_unpack(FILE * fp,GRIBMessage * grib);
 
 #ifdef __cplusplus
 }
