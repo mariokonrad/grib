@@ -5,6 +5,10 @@
 extern "C" {
 #endif
 
+#if !defined(GRIB_MISSING_VALUE)
+#define GRIB_MISSING_VALUE (1.e30)
+#endif
+
 typedef struct {
 	int total_len;
 	int pds_len;

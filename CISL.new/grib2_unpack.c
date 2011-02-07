@@ -7,8 +7,6 @@
 
 #define UNUSED_ARG(a) (void)(a)
 
-static const double GRIB_MISSING_VALUE = 1.e30;
-
 static int dec_jpeg2000(char * injpc, int bufsize, int * outfld) /* {{{ */
 {
 	int ier;

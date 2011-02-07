@@ -5,8 +5,6 @@
 #include <string.h>
 #include <math.h>
 
-static const double GRIB_MISSING_VALUE = 1.e30;
-
 int grib1_unpackIS(FILE * fp, GRIBRecord * grib) /* {{{ */
 {
 	unsigned char temp[8];
