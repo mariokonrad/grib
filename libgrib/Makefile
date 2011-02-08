@@ -7,7 +7,7 @@ CFLAGS=-Wall -Wextra -ansi -pedantic -I. -I$(HOME)/tmp/grib_libraries/local/incl
 
 all : libgrib.a
 
-libgrib.a : grib1_unpack.o grib2_unpack.o get_bits.o set_bits.o conv_float.o grib2_conv.o
+libgrib.a : grib1_unpack.o grib2_unpack.o get_bits.o set_bits.o conv_float.o grib2_conv.o grib1_write.o
 	ar rcs $@ $^
 
 clean :

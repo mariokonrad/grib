@@ -5,101 +5,7 @@
 #include <string.h>
 #include <math.h>
 
-int grib1_unpackIS(GRIBRecord * grib, int (*read_func)(void * buf, unsigned int len)) /* {{{ */
-{
-	unsigned char temp[8];
-	int status;
-	size_t n;
-	size_t num;
-
-	if (read_func == NULL) {
-		return -1;
-	}
-
-	if (grib->buffer != NULL) {
-		free(grib->buffer);
-	}
-	if ((status = read_func(temp, 4)) != 4) {
-		if (status == 0) {
-			return -1;
-		} else {
-			return 1;
-		}
-	}
-
-	/* search for the beginning of the next GRIB message */
-	if (strncmp((char *)temp, "GRIB", 4) != 0) {
-		while (temp[0] != 0x47 || temp[1] != 0x52 || temp[2] != 0x49 || temp[3] != 0x42) {
-			switch (temp[1]) {
-				case 0x47:
-					for (n = 0; n < 3; n++) {
-						temp[n] = temp[n+1];
-					}
-					if (read_func(&temp[3], 1) == 0) {
-						return -1;
-					}
-					break;
-				default:
-					switch (temp[2]) {
-						case 0x47:
-							for (n = 0; n < 2; n++) {
-								temp[n] = temp[n+2];
-							}
-							if (read_func(&temp[2], 2) == 0) {
-								return -1;
-							}
-							break;
-						default:
-							switch(temp[3]) {
-								case 0x47:
-									temp[0] = temp[3];
-									if (read_func(&temp[1], 3) == 0) {
-										return -1;
-									}
-									break;
-								default:
-									if (read_func(temp, 4) == 0) {
-										return -1;
-									}
-									break;
-							}
-					}
-					break;
-			}
-		}
-	}
-
-	if (read_func(&temp[4], 4) == 0) {
-		return 1;
-	}
-	get_bits(temp, &grib->total_len, 32, 24);
-	if (grib->total_len == 24) {
-		grib->ed_num = 0;
-		grib->pds_len = grib->total_len;
-
-		/* add the four bytes for 'GRIB' + 3 bytes for the length of the section
-		 ** following the PDS */
-		grib->total_len += 7;
-	} else {
-		grib->ed_num = 1;
-	}
-
-	grib->nx = grib->ny = 0;
-	grib->buffer = (unsigned char *)malloc(grib->total_len + 4);
-	memcpy(grib->buffer, temp, 8);
-	num = grib->total_len - 8;
-	status = read_func(&grib->buffer[8], num);
-	if (status != num) {
-		return 1;
-	} else {
-		if (strncmp(&((char *)grib->buffer)[grib->total_len-4], "7777", 4) != 0) {
-			fprintf(stderr,"Warning: no end section found\n");
-		}
-		return 0;
-	}
-} /* }}} */
-
-void grib1_unpackPDS(GRIBRecord * grib) /* {{{ */
+static int grib1_unpackPDS(GRIBRecord * grib) /* {{{ */
 {
 	int n;
 	int flag;
@@ -224,7 +130,7 @@ void grib1_unpackPDS(GRIBRecord * grib) /* {{{ */
 	if (grib->ed_num == 0) {
 		grib->pds_ext_len = 0;
 		grib->offset += 192;
-		return;
+		return 0;
 	}
 
 	get_bits(grib->buffer, &cent, grib->offset + 192, 8);  /* century */
@@ -265,9 +171,10 @@ void grib1_unpackPDS(GRIBRecord * grib) /* {{{ */
 	} else {
 		grib->pds_ext_len = 0;
 	}
+	return 0;
 } /* }}} */
 
-void grib1_unpackGDS(GRIBRecord * grib) /* {{{ */
+static int grib1_unpackGDS(GRIBRecord * grib) /* {{{ */
 {
 	int sign;
 	int dum;
@@ -392,13 +299,13 @@ void grib1_unpackGDS(GRIBRecord * grib) /* {{{ */
 
 		default:
 			fprintf(stderr,"Grid type %d is not understood\n", grib->data_rep);
-			exit(1);
-			break;
+			return -1;
 	}
 	grib->offset += grib->gds_len * 8;
+	return 0;
 } /* }}} */
 
-void grib1_unpackBDS(GRIBRecord * grib) /* {{{ */
+static int grib1_unpackBDS(GRIBRecord * grib) /* {{{ */
 {
 	int n;
 	int m;
@@ -426,7 +333,7 @@ void grib1_unpackBDS(GRIBRecord * grib) /* {{{ */
 		get_bits(grib->buffer, &tref, grib->offset + 32, 16);
 		if (tref != 0) {
 			fprintf(stderr,"Error: unknown pre-defined bit-map %d\n",tref);
-			exit(1);
+			return -1;
 		}
 		num_packed = (bms_length - 6) * 8 - ub;
 		bitmap = (int *)malloc(sizeof(int)*num_packed);
@@ -444,13 +351,15 @@ void grib1_unpackBDS(GRIBRecord * grib) /* {{{ */
 	if (grib->ed_num == 0) {
 		grib->total_len += (grib->bds_len + 1);
 	}
+
 	/* flag */
 	get_bits(grib->buffer, &grib->bds_flag, grib->offset + 24, 4);
 	get_bits(grib->buffer, &ub,grib->offset + 28, 4);
+
 	/* bit width of the packed data points */
 	get_bits(grib->buffer, &grib->pack_width, grib->offset + 80, 8);
-
 	get_bits(grib->buffer, &sign, grib->offset + 32, 1);
+
 	/* binary scale factor */
 	get_bits(grib->buffer, &E, grib->offset + 33, 15);
 	if (sign == 1) {
@@ -536,29 +445,138 @@ void grib1_unpackBDS(GRIBRecord * grib) /* {{{ */
 	} else {
 		/* second-order packing */
 		fprintf(stderr,"Error: complex packing not currently supported\n");
-		exit(1);
+		if (packed != NULL) {
+			free(packed);
+			packed = NULL;
+		}
+		return -1;
 	}
 	free(packed);
+	return 0;
 } /* }}} */
 
-int grib1_unpack(GRIBRecord * grib, int (*read_func)(void * buf, unsigned int len))
+static int search_next_message(unsigned char * temp, int (*read_func)(void * buf, unsigned int len))
 {
+	int n;
+
+	if (strncmp((char *)temp, "GRIB", 4) != 0) {
+		while (temp[0] != 0x47 || temp[1] != 0x52 || temp[2] != 0x49 || temp[3] != 0x42) {
+			switch (temp[1]) {
+				case 0x47:
+					for (n = 0; n < 3; n++) {
+						temp[n] = temp[n+1];
+					}
+					if (read_func(&temp[3], 1) == 0) {
+						return -1;
+					}
+					break;
+
+				default:
+					switch (temp[2]) {
+						case 0x47:
+							for (n = 0; n < 2; n++) {
+								temp[n] = temp[n+2];
+							}
+							if (read_func(&temp[2], 2) == 0) {
+								return -1;
+							}
+							break;
+
+						default:
+							switch(temp[3]) {
+								case 0x47:
+									temp[0] = temp[3];
+									if (read_func(&temp[1], 3) == 0) {
+										return -1;
+									}
+									break;
+								default:
+									if (read_func(temp, 4) == 0) {
+										return -1;
+									}
+									break;
+							}
+							break;
+					}
+					break;
+			}
+		}
+	}
+	return 0;
+}
+
+static int grib1_unpackIS(GRIBRecord * grib, int (*read_func)(void * buf, unsigned int len)) /* {{{ */
+{
+	unsigned char temp[8];
 	int status;
+	size_t n;
+	size_t num;
 
 	if (read_func == NULL) {
 		return -1;
 	}
 
-	status = grib1_unpackIS(grib, read_func);
-	if (status != 0) {
-		return status;
+	if (grib->buffer != NULL) {
+		free(grib->buffer);
 	}
-	grib1_unpackPDS(grib);
-	if (grib->gds_included == 1) {
-		grib1_unpackGDS(grib);
-	}
-	grib1_unpackBDS(grib);
 
+	if (read_func(temp, 4) != 4) {
+		return -1;
+	}
+
+	if (search_next_message(temp, read_func) != 0) {
+		return -1;
+	}
+
+	if (read_func(&temp[4], 4) == 0) {
+		return 1;
+	}
+
+	get_bits(temp, &grib->total_len, 32, 24);
+	if (grib->total_len == 24) {
+		grib->ed_num = 0;
+		grib->pds_len = grib->total_len;
+
+		/* add the four bytes for 'GRIB' + 3 bytes for the length of the section following the PDS */
+		grib->total_len += 7;
+	} else {
+		grib->ed_num = 1;
+	}
+
+	grib->nx = grib->ny = 0;
+	grib->buffer = (unsigned char *)malloc((grib->total_len + 4) * sizeof(unsigned char));
+	memcpy(grib->buffer, temp, 8);
+	num = grib->total_len - 8;
+	status = read_func(&grib->buffer[8], num);
+	if (status != num) {
+		return 1;
+	} else {
+		if (strncmp(&((char *)grib->buffer)[grib->total_len-4], "7777", 4) != 0) {
+			fprintf(stderr,"Warning: no end section found\n");
+		}
+		return 0;
+	}
+} /* }}} */
+
+int grib1_unpack(GRIBRecord * grib, int (*read_func)(void * buf, unsigned int len))
+{
+	if (read_func == NULL) {
+		return -1;
+	}
+	if (grib1_unpackIS(grib, read_func) != 0) {
+		return -1;
+	}
+	if (grib1_unpackPDS(grib) != 0) {
+		return -1;
+	}
+	if (grib->gds_included == 1) {
+		if (grib1_unpackGDS(grib) != 0) {
+			return -1;
+		}
+	}
+	if (grib1_unpackBDS(grib) != 0) {
+		return -1;
+	}
 	return 0;
 }
 

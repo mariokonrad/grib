@@ -8,10 +8,10 @@
 extern "C" {
 #endif
 
-void grib2_packPDS(GRIBMessage * msg, int grid_number, unsigned char * grib1_buffer, size_t * offset);
-void grib2_packGDS(GRIBMessage * msg, int grid_number, unsigned char * grib1_buffer, size_t * offset);
-void grib2_packBMS(GRIBMessage * msg, int grid_number, unsigned char * grib1_buffer, size_t * offset, size_t num_points);
-void grib2_packBDS(GRIBMessage * msg, int grid_number, unsigned char * grib1_buffer, size_t * offset, int * pvals, size_t num_to_pack, int pack_width);
+int grib2_packPDS(GRIBMessage * msg, int grid_number, unsigned char * grib1_buffer, size_t * offset);
+int grib2_packGDS(GRIBMessage * msg, int grid_number, unsigned char * grib1_buffer, size_t * offset);
+int grib2_packBMS(GRIBMessage * msg, int grid_number, unsigned char * grib1_buffer, size_t * offset, size_t num_points);
+int grib2_packBDS(GRIBMessage * msg, int grid_number, unsigned char * grib1_buffer, size_t * offset, int * pvals, size_t num_to_pack, int pack_width);
 
 #ifdef __cplusplus
 }

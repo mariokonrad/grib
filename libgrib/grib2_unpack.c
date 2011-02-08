@@ -78,110 +78,7 @@ static int dec_jpeg2000(char * injpc, int bufsize, int * outfld) /* {{{ */
 	return 0;
 } /* }}} */
 
-int grib2_unpackIS(GRIBMessage * grib_msg, int (*read_func)(void * buf, unsigned int len)) /* {{{ */
-{
-	unsigned char temp[16];
-	int status;
-	int n;
-	size_t num;
-
-	if (read_func == NULL) {
-		return -1;
-	}
-
-	if (grib_msg->buffer != NULL) {
-		free(grib_msg->buffer);
-		grib_msg->buffer = NULL;
-	} else {
-		grib_msg->grids = NULL;
-		grib_msg->md.stat_proc.proc_code = NULL;
-	}
-	if (grib_msg->grids != NULL) {
-		for (n = 0; n < grib_msg->num_grids; n++) {
-			if (grib_msg->grids[n].md.bitmap != NULL) {
-				free(grib_msg->grids[n].md.bitmap);
-				grib_msg->grids[n].md.bitmap = NULL;
-			}
-			free(grib_msg->grids[n].gridpoints);
-		}
-		free(grib_msg->grids);
-		grib_msg->grids=NULL;
-	}
-	grib_msg->num_grids=0;
-	if ((status = read_func(temp, 4)) != 4) {
-		if (status == 0) {
-			return -1;
-		} else {
-			return 1;
-		}
-	}
-
-	/* search for the beginning of the next GRIB message */
-	if (strncmp((char *)temp, "GRIB", 4) != 0) {
-		while (temp[0] != 0x47 || temp[1] != 0x52 || temp[2] != 0x49 || temp[3] != 0x42) {
-			switch (temp[1]) {
-				case 0x47:
-					for (n=0; n < 3; n++) {
-						temp[n]=temp[n+1];
-					}
-					if ((status = read_func(&temp[3], 1)) == 0) {
-						return -1;
-					}
-					break;
-
-				default:
-					switch(temp[2]) {
-						case 0x47:
-							for (n = 0; n < 2; n++) {
-								temp[n] = temp[n+2];
-							}
-							if ((status = read_func(&temp[2], 2)) == 0) {
-								return -1;
-							}
-							break;
-
-						default:
-							switch(temp[3]) {
-								case 0x47:
-									temp[0]=temp[3];
-									if ((status = read_func(&temp[1], 3)) == 0) {
-										return -1;
-									}
-									break;
-								default:
-									if ((status = read_func(temp, 4)) == 0) {
-										return -1;
-									}
-									break;
-							}
-							break;
-					}
-			}
-		}
-	}
-	if ((status = read_func(&temp[4], 12)) == 0) {
-		return 1;
-	}
-	get_bits(temp, &grib_msg->disc, 48, 8);
-	get_bits(temp, &grib_msg->ed_num, 56, 8);
-	get_bits(temp, &grib_msg->total_len, 96, 32);
-	grib_msg->md.nx = grib_msg->md.ny = 0;
-	grib_msg->buffer = (unsigned char *)malloc((grib_msg->total_len + 4) * sizeof(unsigned char));
-	memcpy(grib_msg->buffer, temp, 16);
-	num = grib_msg->total_len - 16;
-	status = read_func(&grib_msg->buffer[16], num);
-	if (status != num) {
-		return 1;
-	} else {
-		if (strncmp(&((char *)grib_msg->buffer)[grib_msg->total_len - 4], "7777", 4) != 0) {
-			fprintf(stderr, "Warning: no end section found\n");
-		}
-		grib_msg->offset = 128;
-		return 0;
-	}
-} /* }}} */
-
-void grib2_unpackIDS(GRIBMessage * grib_msg) /* {{{ */
+static int grib2_unpackIDS(GRIBMessage * grib_msg) /* {{{ */
 {
 	int length;
 	int hh;
@@ -231,15 +128,19 @@ void grib2_unpackIDS(GRIBMessage * grib_msg) /* {{{ */
 	/* type of data */
 	get_bits(grib_msg->buffer,&grib_msg->data_type,grib_msg->offset+160,8);
 	grib_msg->offset+=length*8;
+
+	return 0;
 } /* }}} */
 
-void grib2_unpackLUS(GRIBMessage * grib)
+static int grib2_unpackLUS(GRIBMessage * grib)
 {
 	UNUSED_ARG(grib);
 	/* TODO */
+
+	return 0;
 }
 
-void grib2_unpackGDS(GRIBMessage * grib_msg) /* {{{ */
+static int grib2_unpackGDS(GRIBMessage * grib_msg) /* {{{ */
 {
 	int src;
 	int num_in_list;
@@ -250,14 +151,14 @@ void grib2_unpackGDS(GRIBMessage * grib_msg) /* {{{ */
 	get_bits(grib_msg->buffer,&src,grib_msg->offset+40,8);
 	if (src != 0) {
 		fprintf(stderr,"Don't recognize predetermined grid definitions");
-		exit(1);
+		return -1;
 	}
 
 	/* quasi-regular grid indication */
 	get_bits(grib_msg->buffer,&num_in_list,grib_msg->offset+80,8);
 	if (num_in_list > 0) {
 		fprintf(stderr,"Unable to unpack quasi-regular grids");
-		exit(1);
+		return -1;
 	}
 
 	/* grid definition template number */
@@ -416,12 +317,12 @@ void grib2_unpackGDS(GRIBMessage * grib_msg) /* {{{ */
 
 		default:
 			fprintf(stderr,"Grid template %d is not understood\n",grib_msg->md.gds_templ_num);
-			exit(1);
-			break;
+			return -1;
 	}
+	return 0;
 } /* }}} */
 
-void grib2_unpackPDS(GRIBMessage * grib_msg) /* {{{ */
+static int grib2_unpackPDS(GRIBMessage * grib_msg) /* {{{ */
 {
 	int num_coords;
 	int factor;
@@ -438,7 +339,7 @@ void grib2_unpackPDS(GRIBMessage * grib_msg) /* {{{ */
 	get_bits(grib_msg->buffer, &num_coords,grib_msg->offset + 40, 16);
 	if (num_coords > 0) {
 		fprintf(stderr,"Unable to decode hybrid coordinates");
-		exit(1);
+		return -1;
 	}
 	/* product definition template number */
 	get_bits(grib_msg->buffer, &grib_msg->md.pds_templ_num, grib_msg->offset + 56, 16);
@@ -571,12 +472,12 @@ void grib2_unpackPDS(GRIBMessage * grib_msg) /* {{{ */
 
 		default:
 			fprintf(stderr,"Product Definition Template %d is not understood\n", grib_msg->md.pds_templ_num);
-			exit(1);
-			break;
+			return -1;
 	}
+	return 0;
 } /* }}} */
 
-void grib2_unpackDRS(GRIBMessage * grib) /* {{{ */
+static int grib2_unpackDRS(GRIBMessage * grib) /* {{{ */
 {
 	int sign;
 	int value;
@@ -608,12 +509,12 @@ void grib2_unpackDRS(GRIBMessage * grib) /* {{{ */
 
 		default:
 			fprintf(stderr,"Data template %d is not understood\n",grib->md.drs_templ_num);
-			exit(1);
-			break;
+			return -1;
 	}
+	return 0;
 } /* }}} */
 
-void grib2_unpackBMS(GRIBMessage * grib) /* {{{ */
+static int grib2_unpackBMS(GRIBMessage * grib) /* {{{ */
 {
 	int ind;
 	int len;
@@ -639,12 +540,12 @@ void grib2_unpackBMS(GRIBMessage * grib) /* {{{ */
 			break;
 		default:
 			fprintf(stderr,"This code is not currently set up to deal with predefined bit-maps\n");
-			exit(1);
-			break;
+			return -1;
 	}
+	return 0;
 } /* }}} */
 
-void grib2_unpackDS(GRIBMessage * grib, int grid_num) /* {{{ */
+static int grib2_unpackDS(GRIBMessage * grib, int grid_num) /* {{{ */
 {
 	int off;
 	int n;
@@ -668,6 +569,7 @@ void grib2_unpackDS(GRIBMessage * grib, int grid_num) /* {{{ */
 				}
 			}
 			break;
+
 		case 40:
 		case 40000:
 			get_bits(grib->buffer, &len,grib->offset, 32);
@@ -692,6 +594,121 @@ void grib2_unpackDS(GRIBMessage * grib, int grid_num) /* {{{ */
 			free(jvals);
 			break;
 	}
+
+	return 0;
+} /* }}} */
+
+static int search_next_message(unsigned char * temp, int (*read_func)(void * buf, unsigned int len))
+{
+	int n;
+
+	if (strncmp((char *)temp, "GRIB", 4) != 0) {
+		while (temp[0] != 0x47 || temp[1] != 0x52 || temp[2] != 0x49 || temp[3] != 0x42) {
+			switch (temp[1]) {
+				case 0x47:
+					for (n = 0; n < 3; n++) {
+						temp[n] = temp[n+1];
+					}
+					if (read_func(&temp[3], 1) == 0) {
+						return -1;
+					}
+					break;
+
+				default:
+					switch (temp[2]) {
+						case 0x47:
+							for (n = 0; n < 2; n++) {
+								temp[n] = temp[n+2];
+							}
+							if (read_func(&temp[2], 2) == 0) {
+								return -1;
+							}
+							break;
+
+						default:
+							switch(temp[3]) {
+								case 0x47:
+									temp[0] = temp[3];
+									if (read_func(&temp[1], 3) == 0) {
+										return -1;
+									}
+									break;
+								default:
+									if (read_func(temp, 4) == 0) {
+										return -1;
+									}
+									break;
+							}
+							break;
+					}
+					break;
+			}
+		}
+	}
+	return 0;
+}
+
+static int grib2_unpackIS(GRIBMessage * grib_msg, int (*read_func)(void * buf, unsigned int len)) /* {{{ */
+{
+	unsigned char temp[16];
+	int status;
+	int n;
+	size_t num;
+
+	if (read_func == NULL) {
+		return -1;
+	}
+
+	if (grib_msg->buffer != NULL) {
+		free(grib_msg->buffer);
+		grib_msg->buffer = NULL;
+	} else {
+		grib_msg->grids = NULL;
+		grib_msg->md.stat_proc.proc_code = NULL;
+	}
+	if (grib_msg->grids != NULL) {
+		for (n = 0; n < grib_msg->num_grids; n++) {
+			if (grib_msg->grids[n].md.bitmap != NULL) {
+				free(grib_msg->grids[n].md.bitmap);
+				grib_msg->grids[n].md.bitmap = NULL;
+			}
+			free(grib_msg->grids[n].gridpoints);
+		}
+		free(grib_msg->grids);
+		grib_msg->grids=NULL;
+	}
+	grib_msg->num_grids=0;
+
+	if (read_func(temp, 4) != 4) {
+		return -1;
+	}
+
+	if (search_next_message(temp, read_func) != 0) {
+		return -1;
+	}
+
+	if (read_func(&temp[4], 12) == 0) {
+		return 1;
+	}
+
+	get_bits(temp, &grib_msg->disc, 48, 8);
+	get_bits(temp, &grib_msg->ed_num, 56, 8);
+	get_bits(temp, &grib_msg->total_len, 96, 32);
+	grib_msg->md.nx = grib_msg->md.ny = 0;
+	grib_msg->buffer = (unsigned char *)malloc((grib_msg->total_len + 4) * sizeof(unsigned char));
+	memcpy(grib_msg->buffer, temp, 16);
+	num = grib_msg->total_len - 16;
+	status = read_func(&grib_msg->buffer[16], num);
+	if (status != num) {
+		return 1;
+	}
+
+	if (strncmp(&((char *)grib_msg->buffer)[grib_msg->total_len - 4], "7777", 4) != 0) {
+		fprintf(stderr, "Warning: no end section found\n");
+		return -1;
+	}
+	grib_msg->offset = 128;
+	return 0;
 } /* }}} */
 
 int grib2_unpack(GRIBMessage * grib, int (*read_func)(void * buf, unsigned int len))
@@ -700,17 +717,17 @@ int grib2_unpack(GRIBMessage * grib, int (*read_func)(void * buf, unsigned int l
 	int off;
 	int len;
 	int sec_num;
-	int status;
 
 	if (read_func == NULL) {
 		return -1;
 	}
 
-	status = grib2_unpackIS(grib, read_func);
-	if (status != 0) {
-		return status;
+	if (grib2_unpackIS(grib, read_func) != 0) {
+		return -1;
 	}
-	grib2_unpackIDS(grib);
+	if (grib2_unpackIDS(grib) != 0) {
+		return -1;
+	}
 
 	/* find out how many grids are in this message */
 	off = grib->offset;
@@ -729,23 +746,35 @@ int grib2_unpack(GRIBMessage * grib, int (*read_func)(void * buf, unsigned int l
 		get_bits(grib->buffer, &sec_num, grib->offset + 32, 8);
 		switch (sec_num) {
 			case 2:
-				grib2_unpackLUS(grib);
+				if (grib2_unpackLUS(grib) != 0) {
+					return -1;
+				}
 				break;
 			case 3:
-				grib2_unpackGDS(grib);
+				if (grib2_unpackGDS(grib) != 0) {
+					return -1;
+				}
 				break;
 			case 4:
-				grib2_unpackPDS(grib);
+				if (grib2_unpackPDS(grib) != 0) {
+					return -1;
+				}
 				break;
 			case 5:
-				grib2_unpackDRS(grib);
+				if (grib2_unpackDRS(grib) != 0) {
+					return -1;
+				}
 				break;
 			case 6:
-				grib2_unpackBMS(grib);
+				if (grib2_unpackBMS(grib) != 0) {
+					return -1;
+				}
 				break;
 			case 7:
 				grib->grids[n].md = grib->md;
-				grib2_unpackDS(grib, n);
+				if (grib2_unpackDS(grib, n) != 0) {
+					return -1;
+				}
 				n++;
 				break;
 		}

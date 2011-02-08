@@ -2,23 +2,32 @@
 #include <grib2.h>
 #include <grib2_conv.h>
 #include <grib2_unpack.h>
+#include <grib1_write.h>
 #include <set_bits.h>
 #include <math.h>
 #include <stdlib.h>
+#include <assert.h>
 
 static FILE * fp = NULL;
+static FILE * ofp = NULL;
 
-static int read_func(void * buf, size_t len)
+static int read_func(void * buf, unsigned int len)
 {
 	return fp == NULL
 		? 0
 		: fread(buf, 1, len, fp);
 }
 
+static int write_func(const void * buf, unsigned int len)
+{
+	return ofp == NULL
+		? 0
+		: fwrite(buf, 1, len, ofp);
+}
+
 int main(int argc, char ** argv)
 {
 	GRIBMessage grib_msg;
-	FILE * ofp = NULL;
 	size_t nmsg = 0;
 	size_t ngrid = 0;
 	int status;
@@ -30,9 +39,6 @@ int main(int argc, char ** argv)
 	int * pvals = NULL;
 	int max_pack;
 	unsigned char * grib1_buffer = NULL;
-	unsigned char dum[3];
-	char * head = "GRIB";
-	char * tail = "7777";
 	int n;
 	int m;
 	size_t offset;
@@ -57,15 +63,15 @@ int main(int argc, char ** argv)
 			switch (grib_msg.md.pds_templ_num) {
 				case 0:
 				case 8:
-					length=28;
+					length = 28;
 					break;
 				case 1:
 				case 11:
-					length=43;
+					length = 43;
 					break;
 				case 2:
 				case 12:
-					length=42;
+					length = 42;
 					break;
 				default:
 					fprintf(stderr,"Unable to map Product Definition Template %d into GRIB1\n", grib_msg.md.pds_templ_num);
@@ -127,34 +133,39 @@ int main(int argc, char ** argv)
 			offset = 0;
 
 			/* pack the Product Definition Section */
-			grib2_packPDS(&grib_msg, n, grib1_buffer, &offset);
+			if (grib2_packPDS(&grib_msg, n, grib1_buffer, &offset) != 0) {
+				assert(0);
+			}
 
 			/* pack the Grid Definition Section */
-			grib2_packGDS(&grib_msg, n, grib1_buffer, &offset);
+			if (grib2_packGDS(&grib_msg, n, grib1_buffer, &offset) != 0) {
+				assert(0);
+			}
 
 			/* pack the Bitmap Section, if it exists */
 			if (grib_msg.grids[n].md.bitmap != NULL) {
-				grib2_packBMS(&grib_msg, n, grib1_buffer, &offset, num_points);
+				if (grib2_packBMS(&grib_msg, n, grib1_buffer, &offset, num_points) != 0) {
+					assert(0);
+				}
 			}
 
 			/* pack the Binary Data Section */
-			grib2_packBDS(&grib_msg, n, grib1_buffer, &offset, pvals, num_to_pack, pack_width);
+			if (grib2_packBDS(&grib_msg, n, grib1_buffer, &offset, pvals, num_to_pack, pack_width) != 0) {
+				assert(0);
+			}
 
 			free(pvals);
 
 			/* output the GRIB1 grid */
-			fwrite(head, 1, 4, ofp);
-			set_bits(dum, length + 12, 0, 24);
-			fwrite(dum, 1, 3, ofp);
-			dum[0] = 1;
-			fwrite(dum, 1, 1, ofp);
-			fwrite(grib1_buffer, 1, length, ofp);
-			fwrite(tail, 1, 4, ofp);
+			if (grib1_write_raw(grib1_buffer, length, &write_func) != 0) {
+				fprintf(stderr, "Cannot write GRIB1 file\n");
+				return -1;
+			}
 			ngrid++;
 		}
 	}
 	if (status != -1) {
-		printf("Read error after %d messages\n",nmsg);
+		printf("Read error after %d messages\n", nmsg);
 	}
 	printf("Number of GRIB1 grids written to output: %d\n", ngrid);
 	fclose(fp);
