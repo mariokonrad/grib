@@ -1,5 +1,7 @@
 #include <cstdio>
 
+// depends on libg2clib
+
 extern "C" {
 #include <grib2.h>
 }

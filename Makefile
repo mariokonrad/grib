@@ -9,7 +9,7 @@ CC=gcc
 CXXFLAGS=-Wall -Wextra -ansi -pedantic -O2
 CFLAGS=-Wall -Wextra -ansi -pedantic -O2
 
-all : grib wgrib grib2decode
+all : grib wgrib
 
 grib : grib.o
 	$(CXX) -o $@ $^ $(CURL_LIB)
@@ -17,11 +17,11 @@ grib : grib.o
 wgrib : wgrib.o
 	$(CC) -o $@ $^
 
-grib2decode : grib2decode.o
-	$(CXX) -o $@ $^ -L../grib_libraries/g2clib-1.2.1 -lg2c -L../grib_libraries/local/lib -ljasper -lpng
+#grib2decode : grib2decode.o
+#	$(CXX) -o $@ $^ -L../grib_libraries/g2clib-1.2.1 -lg2c -L../grib_libraries/local/lib -ljasper -lpng
 
-grib2decode.o : grib2decode.cpp
-	$(CXX) -o $@ -c $< $(CXXFLAGS) -I../grib_libraries/g2clib-1.2.1
+#grib2decode.o : grib2decode.cpp
+#	$(CXX) -o $@ -c $< $(CXXFLAGS) -I../grib_libraries/g2clib-1.2.1
 
 clean :
 	rm -f grib
