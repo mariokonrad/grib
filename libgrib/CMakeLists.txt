@@ -26,15 +26,3 @@ add_library(
 	grib2_conv.c
 	)
 
-add_executable(
-	grib2_to_grib1
-	grib2_to_grib1.c
-	)
-
-target_link_libraries(
-	grib2_to_grib1
-	grib
-	m
-	jasper
-	)
-

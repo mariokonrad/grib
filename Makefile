@@ -1,5 +1,7 @@
 .PHONY: all clean
 
+LIB_JASPER=-L$(HOME)/tmp/grib_libraries/local/lib -ljasper
+
 CURL_INCLUDE=`curl-config --cflags`
 CURL_LIB=`curl-config --static-libs`
 
@@ -7,15 +9,18 @@ CXX=g++
 CC=gcc
 
 CXXFLAGS=-Wall -Wextra -ansi -pedantic -O2
-CFLAGS=-Wall -Wextra -ansi -pedantic -O2
+CFLAGS=-Wall -Wextra -ansi -pedantic -O2 -Ilibgrib
 
-all : grib wgrib
+all : grib wgrib grib2_to_grib1
 
 grib : grib.o
 	$(CXX) -o $@ $^ $(CURL_LIB)
 
 wgrib : wgrib.o
 	$(CC) -o $@ $^
+
+grib2_to_grib1 : grib2_to_grib1.o
+	$(CC) -o $@ grib2_to_grib1.o -Llibgrib -lgrib -lm $(LIB_JASPER)
 
 #grib2decode : grib2decode.o
 #	$(CXX) -o $@ $^ -L../grib_libraries/g2clib-1.2.1 -lg2c -L../grib_libraries/local/lib -ljasper -lpng
@@ -27,6 +32,7 @@ clean :
 	rm -f grib
 	rm -f wgrib
 	rm -f grib2decode
+	rm -f grib2_to_grib1
 	rm -f *.o
 
 %.o : %.cpp
