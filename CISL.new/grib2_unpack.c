@@ -47,7 +47,7 @@ static int dec_jpeg2000(char * injpc, int bufsize, int * outfld) /* {{{ */
 	No color components.
 	*/
 	if (image->numcmpts_ != 1 ) {
-		printf("dec_jpeg2000: Found color image.  Grayscale expected.\n");
+		printf("dec_jpeg2000: Found color image. Grayscale expected.\n");
 		return -5;
 	}
 
@@ -78,12 +78,16 @@ static int dec_jpeg2000(char * injpc, int bufsize, int * outfld) /* {{{ */
 	return 0;
 } /* }}} */
 
-int grib2_unpackIS(FILE *fp, GRIBMessage *grib_msg) /* {{{ */
+int grib2_unpackIS(GRIBMessage * grib_msg, int (*read_func)(void * buf, unsigned int len)) /* {{{ */
 {
 	unsigned char temp[16];
 	int status;
 	int n;
 	size_t num;
+
+	if (read_func == NULL) {
+		return -1;
+	}
 
 	if (grib_msg->buffer != NULL) {
 		free(grib_msg->buffer);
@@ -104,7 +108,7 @@ int grib2_unpackIS(FILE *fp, GRIBMessage *grib_msg) /* {{{ */
 		grib_msg->grids=NULL;
 	}
 	grib_msg->num_grids=0;
-	if ((status=fread(temp, 1, 4, fp)) != 4) {
+	if ((status = read_func(temp, 4)) != 4) {
 		if (status == 0) {
 			return -1;
 		} else {
@@ -120,7 +124,7 @@ int grib2_unpackIS(FILE *fp, GRIBMessage *grib_msg) /* {{{ */
 					for (n=0; n < 3; n++) {
 						temp[n]=temp[n+1];
 					}
-					if ((status=fread(&temp[3], 1, 1, fp)) == 0) {
+					if ((status = read_func(&temp[3], 1)) == 0) {
 						return -1;
 					}
 					break;
@@ -131,7 +135,7 @@ int grib2_unpackIS(FILE *fp, GRIBMessage *grib_msg) /* {{{ */
 							for (n = 0; n < 2; n++) {
 								temp[n] = temp[n+2];
 							}
-							if ((status=fread(&temp[2],1,2,fp)) == 0) {
+							if ((status = read_func(&temp[2], 2)) == 0) {
 								return -1;
 							}
 							break;
@@ -140,12 +144,12 @@ int grib2_unpackIS(FILE *fp, GRIBMessage *grib_msg) /* {{{ */
 							switch(temp[3]) {
 								case 0x47:
 									temp[0]=temp[3];
-									if ((status=fread(&temp[1], 1, 3, fp)) == 0) {
+									if ((status = read_func(&temp[1], 3)) == 0) {
 										return -1;
 									}
 									break;
 								default:
-									if ((status=fread(temp, 1, 4, fp)) == 0) {
+									if ((status = read_func(temp, 4)) == 0) {
 										return -1;
 									}
 									break;
@@ -155,7 +159,7 @@ int grib2_unpackIS(FILE *fp, GRIBMessage *grib_msg) /* {{{ */
 			}
 		}
 	}
-	if ((status=fread(&temp[4], 1, 12, fp)) == 0) {
+	if ((status = read_func(&temp[4], 12)) == 0) {
 		return 1;
 	}
 	get_bits(temp, &grib_msg->disc, 48, 8);
@@ -165,12 +169,12 @@ int grib2_unpackIS(FILE *fp, GRIBMessage *grib_msg) /* {{{ */
 	grib_msg->buffer = (unsigned char *)malloc((grib_msg->total_len + 4) * sizeof(unsigned char));
 	memcpy(grib_msg->buffer, temp, 16);
 	num = grib_msg->total_len - 16;
-	status = fread(&grib_msg->buffer[16], 1, num, fp);
+	status = read_func(&grib_msg->buffer[16], num);
 	if (status != num) {
 		return 1;
 	} else {
 		if (strncmp(&((char *)grib_msg->buffer)[grib_msg->total_len - 4], "7777", 4) != 0) {
-			fprintf(stderr,"Warning: no end section found\n");
+			fprintf(stderr, "Warning: no end section found\n");
 		}
 		grib_msg->offset = 128;
 		return 0;
@@ -690,7 +694,7 @@ void grib2_unpackDS(GRIBMessage * grib, int grid_num) /* {{{ */
 	}
 } /* }}} */
 
-int grib2_unpack(FILE * fp, GRIBMessage * grib)
+int grib2_unpack(GRIBMessage * grib, int (*read_func)(void * buf, unsigned int len))
 {
 	int n;
 	int off;
@@ -698,7 +702,12 @@ int grib2_unpack(FILE * fp, GRIBMessage * grib)
 	int sec_num;
 	int status;
 
-	if ((status = grib2_unpackIS(fp, grib)) != 0) {
+	if (read_func == NULL) {
+		return -1;
+	}
+
+	status = grib2_unpackIS(grib, read_func);
+	if (status != 0) {
 		return status;
 	}
 	grib2_unpackIDS(grib);
@@ -716,8 +725,8 @@ int grib2_unpack(FILE * fp, GRIBMessage * grib)
 	grib->grids = (GRIB2Grid *)malloc(grib->num_grids * sizeof(GRIB2Grid));
 	n = 0;
 	while (strncmp(&((char *)grib->buffer)[grib->offset/8], "7777", 4) != 0) {
-		get_bits(grib->buffer,&len,grib->offset,32);
-		get_bits(grib->buffer,&sec_num,grib->offset+32,8);
+		get_bits(grib->buffer, &len, grib->offset, 32);
+		get_bits(grib->buffer, &sec_num, grib->offset + 32, 8);
 		switch (sec_num) {
 			case 2:
 				grib2_unpackLUS(grib);

@@ -5,17 +5,21 @@
 #include <string.h>
 #include <math.h>
 
-int grib1_unpackIS(FILE * fp, GRIBRecord * grib) /* {{{ */
+int grib1_unpackIS(GRIBRecord * grib, int (*read_func)(void * buf, unsigned int len)) /* {{{ */
 {
 	unsigned char temp[8];
 	int status;
 	size_t n;
 	size_t num;
 
+	if (read_func == NULL) {
+		return -1;
+	}
+
 	if (grib->buffer != NULL) {
 		free(grib->buffer);
 	}
-	if ((status=fread(temp, 1, 4, fp)) != 4) {
+	if ((status = read_func(temp, 4)) != 4) {
 		if (status == 0) {
 			return -1;
 		} else {
@@ -31,7 +35,7 @@ int grib1_unpackIS(FILE * fp, GRIBRecord * grib) /* {{{ */
 					for (n = 0; n < 3; n++) {
 						temp[n] = temp[n+1];
 					}
-					if ((status = fread(&temp[3], 1, 1, fp)) == 0) {
+					if (read_func(&temp[3], 1) == 0) {
 						return -1;
 					}
 					break;
@@ -41,7 +45,7 @@ int grib1_unpackIS(FILE * fp, GRIBRecord * grib) /* {{{ */
 							for (n = 0; n < 2; n++) {
 								temp[n] = temp[n+2];
 							}
-							if ((status = fread(&temp[2], 1, 2, fp)) == 0) {
+							if (read_func(&temp[2], 2) == 0) {
 								return -1;
 							}
 							break;
@@ -49,12 +53,12 @@ int grib1_unpackIS(FILE * fp, GRIBRecord * grib) /* {{{ */
 							switch(temp[3]) {
 								case 0x47:
 									temp[0] = temp[3];
-									if ((status = fread(&temp[1], 1, 3, fp)) == 0) {
+									if (read_func(&temp[1], 3) == 0) {
 										return -1;
 									}
 									break;
 								default:
-									if ((status = fread(temp, 1, 4, fp)) == 0) {
+									if (read_func(temp, 4) == 0) {
 										return -1;
 									}
 									break;
@@ -65,7 +69,7 @@ int grib1_unpackIS(FILE * fp, GRIBRecord * grib) /* {{{ */
 		}
 	}
 
-	if ((status = fread(&temp[4], 1, 4, fp)) == 0) {
+	if (read_func(&temp[4], 4) == 0) {
 		return 1;
 	}
 	get_bits(temp, &grib->total_len, 32, 24);
@@ -84,7 +88,7 @@ int grib1_unpackIS(FILE * fp, GRIBRecord * grib) /* {{{ */
 	grib->buffer = (unsigned char *)malloc(grib->total_len + 4);
 	memcpy(grib->buffer, temp, 8);
 	num = grib->total_len - 8;
-	status = fread(&grib->buffer[8], 1, num, fp);
+	status = read_func(&grib->buffer[8], num);
 	if (status != num) {
 		return 1;
 	} else {
@@ -537,11 +541,15 @@ void grib1_unpackBDS(GRIBRecord * grib) /* {{{ */
 	free(packed);
 } /* }}} */
 
-int grib1_unpack(FILE * fp, GRIBRecord * grib)
+int grib1_unpack(GRIBRecord * grib, int (*read_func)(void * buf, unsigned int len))
 {
 	int status;
 
-	status = grib1_unpackIS(fp, grib);
+	if (read_func == NULL) {
+		return -1;
+	}
+
+	status = grib1_unpackIS(grib, read_func);
 	if (status != 0) {
 		return status;
 	}
