@@ -1,5 +1,5 @@
 #include <grib1_write.h>
-#include <set_bits.h>
+#include <bits.h>
 
 int grib1_write_raw(unsigned char * buf, unsigned int len, int (write_func)(const void *, unsigned int))
 {

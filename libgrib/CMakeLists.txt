@@ -18,8 +18,7 @@ include_directories(
 
 add_library(
 	grib STATIC
-	get_bits.c
-	set_bits.c
+	bits.c
 	conv_float.c
 	grib1_unpack.c
 	grib2_unpack.c

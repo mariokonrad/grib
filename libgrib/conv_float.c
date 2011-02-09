@@ -1,6 +1,5 @@
 #include <conv_float.h>
-#include <get_bits.h>
-#include <set_bits.h>
+#include <bits.h>
 #include <math.h>
 
 double ibm2real(unsigned char * buf, size_t off)
@@ -19,9 +18,15 @@ double ibm2real(unsigned char * buf, size_t off)
 	return (sign == 1) ? -native_real : native_real;
 }
 
-int ieee2ibm(double ieee)
+int32_t ieee2ibm(double ieee)
 {
-	int ibm_real = 0;
+	union {
+		int32_t ibm_real;
+		unsigned char ir[sizeof(ibm_real)];
+	} value;
+
+
+	int32_t ibm_real = 0;
 	unsigned char * ir = (unsigned char *)&ibm_real;
 	int sign = 0;
 	int fr = 0;

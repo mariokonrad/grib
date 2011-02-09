@@ -1,5 +1,5 @@
 #include <grib2_unpack.h>
-#include <get_bits.h>
+#include <bits.h>
 #include <jasper/jasper.h>
 #include <stdlib.h>
 #include <string.h>
@@ -675,9 +675,9 @@ static int grib2_unpackIS(GRIBMessage * grib_msg, int (*read_func)(void * buf, u
 			free(grib_msg->grids[n].gridpoints);
 		}
 		free(grib_msg->grids);
-		grib_msg->grids=NULL;
+		grib_msg->grids = NULL;
 	}
-	grib_msg->num_grids=0;
+	grib_msg->num_grids = 0;
 
 	if (read_func(temp, 4) != 4) {
 		return -1;
@@ -688,7 +688,7 @@ static int grib2_unpackIS(GRIBMessage * grib_msg, int (*read_func)(void * buf, u
 	}
 
 	if (read_func(&temp[4], 12) == 0) {
-		return 1;
+		return -1;
 	}
 
 	get_bits(temp, &grib_msg->disc, 48, 8);
@@ -700,7 +700,7 @@ static int grib2_unpackIS(GRIBMessage * grib_msg, int (*read_func)(void * buf, u
 	num = grib_msg->total_len - 16;
 	status = read_func(&grib_msg->buffer[16], num);
 	if (status != num) {
-		return 1;
+		return -1;
 	}
 
 	if (strncmp(&((char *)grib_msg->buffer)[grib_msg->total_len - 4], "7777", 4) != 0) {

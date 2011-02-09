@@ -3,11 +3,11 @@
 .PHONY: all clean
 
 CC=gcc
-CFLAGS=-Wall -Wextra -ansi -pedantic -I. -I$(HOME)/tmp/grib_libraries/local/include
+CFLAGS=-ggdb -Wall -Wextra -ansi -pedantic -I. -I$(HOME)/tmp/grib_libraries/local/include
 
 all : libgrib.a
 
-libgrib.a : grib1_unpack.o grib2_unpack.o get_bits.o set_bits.o conv_float.o grib2_conv.o grib1_write.o
+libgrib.a : grib1_unpack.o grib2_unpack.o bits.o conv_float.o grib2_conv.o grib1_write.o
 	ar rcs $@ $^
 
 clean :

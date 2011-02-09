@@ -1,12 +1,10 @@
 #include <grib2_conv.h>
-#include <set_bits.h>
 #include <conv_float.h>
 #include <math.h>
-#include <string.h>
 
 #define UNUSED_ARG(a) (void)(a)
 
-static int map_statistical_end_time(GRIBMessage * msg, GRIB2Grid * grid)
+static int map_statistical_end_time(GRIBMessage * msg, GRIB2Grid * grid) /* {{{ */
 {
 	switch (grid->md.time_unit) {
 		case 0: return (grid->md.stat_proc.etime / 100 % 100) - (msg->time / 100 % 100);
@@ -18,9 +16,9 @@ static int map_statistical_end_time(GRIBMessage * msg, GRIB2Grid * grid)
 	}
 	fprintf(stderr,"Unable to map end time with units %d to GRIB1\n", grid->md.time_unit);
 	return -1;
-}
+} /* }}} */
 
-static int map_parameter_meterological_temperature(int center, int disc, int param_cat, int param_num)
+static int map_parameter_meterological_temperature(int center, int disc, int param_cat, int param_num) /* {{{ */
 {
 	const char * err = "<unknown>";
 	UNUSED_ARG(disc);
@@ -53,9 +51,9 @@ static int map_parameter_meterological_temperature(int center, int disc, int par
 	}
 	fprintf(stderr, "There is no GRIB1 parameter code for '%s' (%s:%d)\n", err, __FILE__, __LINE__);
 	return -1;
-}
+} /* }}} */
 
-static int map_parameter_meterological_moisture(int center, int disc, int param_cat, int param_num)
+static int map_parameter_meterological_moisture(int center, int disc, int param_cat, int param_num) /* {{{ */
 {
 	const char * err = "<unknown>";
 	UNUSED_ARG(disc);
@@ -213,9 +211,9 @@ static int map_parameter_meterological_moisture(int center, int disc, int param_
 	}
 	fprintf(stderr, "There is no GRIB1 parameter code for '%s' (%s:%d)\n", err, __FILE__, __LINE__);
 	return -1;
-}
+} /* }}} */
 
-static int map_parameter_meterological_momentum(int center, int disc, int param_cat, int param_num)
+static int map_parameter_meterological_momentum(int center, int disc, int param_cat, int param_num) /* {{{ */
 {
 	const char * err = "<unknown>";
 	UNUSED_ARG(disc);
@@ -297,9 +295,9 @@ static int map_parameter_meterological_momentum(int center, int disc, int param_
 	}
 	fprintf(stderr, "There is no GRIB1 parameter code for '%s' (%s:%d)\n", err, __FILE__, __LINE__);
 	return -1;
-}
+} /* }}} */
 
-static int map_parameter_meterological_mass(int center, int disc, int param_cat, int param_num)
+static int map_parameter_meterological_mass(int center, int disc, int param_cat, int param_num) /* {{{ */
 {
 	const char * err = "<unknown>";
 	UNUSED_ARG(disc);
@@ -377,9 +375,9 @@ static int map_parameter_meterological_mass(int center, int disc, int param_cat,
 	}
 	fprintf(stderr, "There is no GRIB1 parameter code for '%s' (%s:%d)\n", err, __FILE__, __LINE__);
 	return -1;
-}
+} /* }}} */
 
-static int map_parameter_meterological_shortwaveradiation(int center, int disc, int param_cat, int param_num)
+static int map_parameter_meterological_shortwaveradiation(int center, int disc, int param_cat, int param_num) /* {{{ */
 {
 	const char * err = "<unknown>";
 	UNUSED_ARG(disc);
@@ -416,9 +414,9 @@ static int map_parameter_meterological_shortwaveradiation(int center, int disc, 
 	}
 	fprintf(stderr, "There is no GRIB1 parameter code for '%s' (%s:%d)\n", err, __FILE__, __LINE__);
 	return -1;
-}
+} /* }}} */
 
-static int map_parameter_meterological_longwaveradiation(int center, int disc, int param_cat, int param_num)
+static int map_parameter_meterological_longwaveradiation(int center, int disc, int param_cat, int param_num) /* {{{ */
 {
 	const char * err = "<unknown>";
 	UNUSED_ARG(disc);
@@ -445,9 +443,9 @@ static int map_parameter_meterological_longwaveradiation(int center, int disc, i
 	}
 	fprintf(stderr, "There is no GRIB1 parameter code for '%s' (%s:%d)\n", err, __FILE__, __LINE__);
 	return -1;
-}
+} /* }}} */
 
-static int map_parameter_meterological_cloud(int center, int disc, int param_cat, int param_num)
+static int map_parameter_meterological_cloud(int center, int disc, int param_cat, int param_num) /* {{{ */
 {
 	const char * err = "<unknown>";
 	UNUSED_ARG(disc);
@@ -491,9 +489,9 @@ static int map_parameter_meterological_cloud(int center, int disc, int param_cat
 	}
 	fprintf(stderr, "There is no GRIB1 parameter code for '%s' (%s:%d)\n", err, __FILE__, __LINE__);
 	return -1;
-}
+} /* }}} */
 
-static int map_parameter_meterological_thermodynamic_stability_index(int center, int disc, int param_cat, int param_num)
+static int map_parameter_meterological_thermodynamic_stability_index(int center, int disc, int param_cat, int param_num) /* {{{ */
 {
 	const char * err = "<unknown>";
 	UNUSED_ARG(disc);
@@ -549,9 +547,9 @@ static int map_parameter_meterological_thermodynamic_stability_index(int center,
 	}
 	fprintf(stderr, "There is no GRIB1 parameter code for '%s' (%s:%d)\n", err, __FILE__, __LINE__);
 	return -1;
-}
+} /* }}}} */
 
-static int map_parameter_meterological_aerosol(int center, int disc, int param_cat, int param_num)
+static int map_parameter_meterological_aerosol(int center, int disc, int param_cat, int param_num) /* {{{ */
 {
 	const char * err = "<unknown>";
 	UNUSED_ARG(center);
@@ -563,9 +561,9 @@ static int map_parameter_meterological_aerosol(int center, int disc, int param_c
 	}
 	fprintf(stderr, "There is no GRIB1 parameter code for '%s' (%s:%d)\n", err, __FILE__, __LINE__);
 	return -1;
-}
+} /* }}} */
 
-static int map_parameter_meterological_tracegas(int center, int disc, int param_cat, int param_num)
+static int map_parameter_meterological_tracegas(int center, int disc, int param_cat, int param_num) /* {{{ */
 {
 	const char * err = "<unknown>";
 	UNUSED_ARG(disc);
@@ -583,9 +581,9 @@ static int map_parameter_meterological_tracegas(int center, int disc, int param_
 	}
 	fprintf(stderr, "There is no GRIB1 parameter code for '%s' (%s:%d)\n", err, __FILE__, __LINE__);
 	return -1;
-}
+} /* }}} */
 
-static int map_parameter_meterological_radar(int center, int disc, int param_cat, int param_num)
+static int map_parameter_meterological_radar(int center, int disc, int param_cat, int param_num) /* {{{ */
 {
 	const char * err = "<unknown>";
 	UNUSED_ARG(center);
@@ -605,18 +603,18 @@ static int map_parameter_meterological_radar(int center, int disc, int param_cat
 	}
 	fprintf(stderr, "There is no GRIB1 parameter code for '%s' (%s:%d)\n", err, __FILE__, __LINE__);
 	return -1;
-}
+} /* }}} */
 
-static int map_parameter_meterological_nuclear_radiology(int center, int disc, int param_cat, int param_num)
+static int map_parameter_meterological_nuclear_radiology(int center, int disc, int param_cat, int param_num) /* {{{ */
 {
 	UNUSED_ARG(center);
 	UNUSED_ARG(disc);
 	UNUSED_ARG(param_cat);
 	UNUSED_ARG(param_num);
 	return -1;
-}
+} /* }}} */
 
-static int map_parameter_meterological_physical_atmospheric_property(int center, int disc, int param_cat, int param_num)
+static int map_parameter_meterological_physical_atmospheric_property(int center, int disc, int param_cat, int param_num) /* {{{ */
 {
 	const char * err = "<unknown>";
 	UNUSED_ARG(disc);
@@ -651,9 +649,9 @@ static int map_parameter_meterological_physical_atmospheric_property(int center,
 	}
 	fprintf(stderr, "There is no GRIB1 parameter code for '%s' (%s:%d)\n", err, __FILE__, __LINE__);
 	return -1;
-}
+} /* }}} */
 
-static int map_parameter_meterological(int center, int disc, int param_cat, int param_num)
+static int map_parameter_meterological(int center, int disc, int param_cat, int param_num) /* {{{ */
 {
 	switch (param_cat) {
 		case  0: return map_parameter_meterological_temperature(center, disc, param_cat, param_num);
@@ -672,9 +670,9 @@ static int map_parameter_meterological(int center, int disc, int param_cat, int 
 		default: break;
 	}
 	return -1;
-}
+} /* }}} */
 
-static int map_parameter_hydrological(int center, int disc, int param_cat, int param_num)
+static int map_parameter_hydrological(int center, int disc, int param_cat, int param_num) /* {{{ */
 {
 	UNUSED_ARG(disc);
 	switch (param_cat) {
@@ -712,9 +710,9 @@ static int map_parameter_hydrological(int center, int disc, int param_cat, int p
 			break;
 	}
 	return -1;
-}
+} /* }}} */
 
-static int map_parameter_landsurface(int center, int disc, int param_cat, int param_num)
+static int map_parameter_landsurface(int center, int disc, int param_cat, int param_num) /* {{{ */
 {
 	UNUSED_ARG(disc);
 	switch (param_cat) {
@@ -772,9 +770,9 @@ static int map_parameter_landsurface(int center, int disc, int param_cat, int pa
 		default: break;
 	}
 	return -1;
-}
+} /* }}} */
 
-static int map_parameter_oceanographic_waves(int center, int disc, int param_cat, int param_num)
+static int map_parameter_oceanographic_waves(int center, int disc, int param_cat, int param_num) /* {{{ */
 {
 	UNUSED_ARG(disc);
 	UNUSED_ARG(center);
@@ -798,9 +796,9 @@ static int map_parameter_oceanographic_waves(int center, int disc, int param_cat
 		default: break;
 	}
 	return -1;
-}
+} /* }}} */
 
-static int map_parameter_oceanographic_currents(int center, int disc, int param_cat, int param_num)
+static int map_parameter_oceanographic_currents(int center, int disc, int param_cat, int param_num) /* {{{ */
 {
 	UNUSED_ARG(disc);
 	UNUSED_ARG(center);
@@ -814,9 +812,9 @@ static int map_parameter_oceanographic_currents(int center, int disc, int param_
 		default: break;
 	}
 	return -1;
-}
+} /* }}} */
 
-static int map_parameter_oceanographic_ice(int center, int disc, int param_cat, int param_num)
+static int map_parameter_oceanographic_ice(int center, int disc, int param_cat, int param_num) /* {{{ */
 {
 	UNUSED_ARG(center);
 	UNUSED_ARG(disc);
@@ -835,9 +833,9 @@ static int map_parameter_oceanographic_ice(int center, int disc, int param_cat, 
 		default: break;
 	}
 	return -1;
-}
+} /* }}} */
 
-static int map_parameter_oceanographic_surface(int center, int disc, int param_cat, int param_num)
+static int map_parameter_oceanographic_surface(int center, int disc, int param_cat, int param_num) /* {{{ */
 {
 	UNUSED_ARG(disc);
 	UNUSED_ARG(center);
@@ -849,9 +847,9 @@ static int map_parameter_oceanographic_surface(int center, int disc, int param_c
 		default: break;
 	}
 	return -1;
-}
+} /* }}} */
 
-static int map_parameter_oceanographic_subsurface(int center, int disc, int param_cat, int param_num)
+static int map_parameter_oceanographic_subsurface(int center, int disc, int param_cat, int param_num) /* {{{ */
 {
 	UNUSED_ARG(disc);
 	UNUSED_ARG(center);
@@ -865,9 +863,9 @@ static int map_parameter_oceanographic_subsurface(int center, int disc, int para
 		default: break;
 	}
 	return -1;
-}
+} /* }}} */
 
-static int map_parameter_oceanographic(int center, int disc, int param_cat, int param_num)
+static int map_parameter_oceanographic(int center, int disc, int param_cat, int param_num) /* {{{ */
 {
 	UNUSED_ARG(disc);
 	UNUSED_ARG(center);
@@ -881,9 +879,9 @@ static int map_parameter_oceanographic(int center, int disc, int param_cat, int 
 		default: break;
 	}
 	return -1;
-}
+} /* }}} */
 
-static int map_parameter_data(int center, int disc, int param_cat, int param_num)
+static int map_parameter_data(int center, int disc, int param_cat, int param_num) /* {{{ */
 {
 	switch (disc) {
 		case  0: return map_parameter_meterological(center, disc, param_cat, param_num); break;
@@ -894,9 +892,9 @@ static int map_parameter_data(int center, int disc, int param_cat, int param_num
 	}
 	fprintf(stderr,"There is no GRIB1 parameter code for discipline %d, parameter category %d, parameter number %d\n", disc, param_cat, param_num);
 	return -1;
-}
+} /* }}} */
 
-static int map_level_data(GRIB2Grid * grid, int * level_type, int * level1, int * level2, int center)
+static int map_level_data(GRIB2Grid * grid, int * level_type, int * level1, int * level2, int center) /* {{{ */
 {
 	if (grid->md.lvl2_type != 255 && grid->md.lvl1_type != grid->md.lvl2_type) {
 		fprintf(stderr,"Unable to indicate a layer bounded by different level types %d and %d in GRIB1\n",
@@ -1027,9 +1025,9 @@ static int map_level_data(GRIB2Grid * grid, int * level_type, int * level1, int 
 		default: break;
 	}
 	return 0;
-}
+} /* }}} */
 
-static int map_time_range(GRIBMessage * msg, GRIB2Grid * grid, int * p1, int * p2, int * t_range, int * n_avg, int * n_missing, int center)
+static int map_time_range(GRIBMessage * msg, GRIB2Grid * grid, int * p1, int * p2, int * t_range, int * n_avg, int * n_missing, int center) /* {{{ */
 {
 	switch (grid->md.pds_templ_num) {
 		case 0:
@@ -1148,9 +1146,9 @@ static int map_time_range(GRIBMessage * msg, GRIB2Grid * grid, int * p1, int * p
 			return -1;
 	}
 	return 0;
-}
+} /* }}} */
 
-int grib2_packPDS(GRIBMessage * msg, int grid_number, unsigned char * grib1_buffer, size_t * offset)
+int grib2_to_grib1_packPDS(GRIBMessage * msg, int grid_number, Buffer * grib1) /* {{{ */
 {
 	int level_type;
 	int level1;
@@ -1165,26 +1163,28 @@ int grib2_packPDS(GRIBMessage * msg, int grid_number, unsigned char * grib1_buff
 
 	static short warned_ensemble = 0;
 
+	unsigned int start_offset = grib1->offset;
+
 	/* length of the PDS */
-	set_bits(grib1_buffer,28,*offset,24);
+	append_bits(grib1, 28, 24);
 
 	/* GRIB1 tables version number */
-	set_bits(grib1_buffer,3,*offset+24,8);
+	append_bits(grib1, 3, 8);
 
 	/* originating center ID */
-	set_bits(grib1_buffer,msg->center_id,*offset+32,8);
+	append_bits(grib1, msg->center_id, 8);
 
 	/* generating process ID */
-	set_bits(grib1_buffer,msg->grids[grid_number].md.gen_proc,*offset+40,8);
+	append_bits(grib1, msg->grids[grid_number].md.gen_proc, 8);
 
 	/* grid definition catalog number - set to 255 because GDS is to be included */
-	set_bits(grib1_buffer,255,*offset+48,8);
+	append_bits(grib1, 255, 8);
 
-	/* flag */
+	/* flag for presence or absence of GDS or BMS */
 	if (msg->grids[grid_number].md.bitmap == NULL) {
-		set_bits(grib1_buffer,0x80,*offset+56,8);
+		append_bits(grib1, 0x80, 8);
 	} else {
-		set_bits(grib1_buffer,0xc0,*offset+56,8);
+		append_bits(grib1, 0xc0, 8);
 	}
 
 	/* parameter code */
@@ -1192,72 +1192,79 @@ int grib2_packPDS(GRIBMessage * msg, int grid_number, unsigned char * grib1_buff
 	if (prm < 0) {
 		return -1;
 	}
-	set_bits(grib1_buffer, prm, *offset+64,8);
+	append_bits(grib1, prm, 8);
+
+	/* level type code */
 	if (map_level_data(&msg->grids[grid_number], &level_type, &level1, &level2, msg->center_id) != 0) {
 		return -1;
 	}
-
-	/* level type code */
-	set_bits(grib1_buffer, level_type, *offset + 72, 8);
+	append_bits(grib1, level_type, 8);
 	if (msg->grids[grid_number].md.lvl2_type == 255) {
-		set_bits(grib1_buffer,level1,*offset+80,16);
+		append_bits(grib1, level1, 16);
 	} else {
-		set_bits(grib1_buffer,level1,*offset+80,8);
-		set_bits(grib1_buffer,level2,*offset+88,8);
+		append_bits(grib1, level1, 8);
+		append_bits(grib1, level2, 8);
 	}
 
 	/* year of century */
-	set_bits(grib1_buffer,(msg->yr % 100),*offset+96,8);
+	append_bits(grib1, (msg->yr % 100), 8);
 
 	/* month */
-	set_bits(grib1_buffer,msg->mo,*offset+104,8);
+	append_bits(grib1, msg->mo, 8);
 
 	/* day */
-	set_bits(grib1_buffer,msg->dy,*offset+112,8);
+	append_bits(grib1, msg->dy, 8);
 
 	/* hour */
-	set_bits(grib1_buffer,msg->time/10000,*offset+120,8);
+	append_bits(grib1, msg->time / 10000, 8);
 
 	/* minute */
-	set_bits(grib1_buffer,(msg->time/100 % 100),*offset+128,8);
+	append_bits(grib1, (msg->time / 100 % 100), 8);
 
 	/* second */
 	if (msg->md.time_unit == 13) {
 		fprintf(stderr,"Unable to indicate 'Second' for time unit in GRIB1\n");
+		append_bits(grib1, 0, 8);
 	} else {
-		set_bits(grib1_buffer, msg->md.time_unit, *offset + 136, 8);
+		append_bits(grib1, msg->md.time_unit, 8);
 	}
 	if (map_time_range(msg, &msg->grids[grid_number], &p1, &p2, &t_range, &n_avg, &n_missing, msg->center_id) != 0) {
 		return -1;
 	}
 	if (t_range == 10) {
-		set_bits(grib1_buffer,p1,*offset+144,16);
+		append_bits(grib1, p1, 16);
 	} else {
-		set_bits(grib1_buffer,p1,*offset+144,8);
-		set_bits(grib1_buffer,p2,*offset+152,8);
+		append_bits(grib1, p1, 8);
+		append_bits(grib1, p2, 8);
 	}
-	set_bits(grib1_buffer,t_range,*offset+160,8);
+	append_bits(grib1, t_range, 8);
 
-	/* century of year */
-	set_bits(grib1_buffer,(msg->yr/100)+1,*offset+192,8);
+	/* number included in average if t_range indicates an average or accumulation, otherwise 0 */
+	append_bits(grib1, 0, 16);
+
+	/* Number Missing from averages or accumulations */
+	append_bits(grib1, 0, 8);
+
+	/* century of initial (reference) */
+	append_bits(grib1, (msg->yr / 100) + 1, 8);
 
 	/* originating sub-center ID */
-	set_bits(grib1_buffer,msg->sub_center_id,*offset+200,8);
+	append_bits(grib1, msg->sub_center_id, 8);
 
 	/* decimal scale factor */
 	D = msg->md.D;
 	if (D < 0) {
-		D=-D+0x8000;
+		D = -D + 0x8000;
 	}
-	set_bits(grib1_buffer, D, *offset + 208, 16);
-	*offset += 224;
+	append_bits(grib1, D, 16);
+
 	if (msg->md.ens_type >= 0) {
 		/* length of the PDS */
-		set_bits(grib1_buffer,43,*offset-224,24);
-		set_bits(grib1_buffer,msg->md.ens_type,*offset+96,8);
-		set_bits(grib1_buffer,msg->md.perturb_num,*offset+104,8);
-		set_bits(grib1_buffer,msg->md.nfcst_in_ensemble,*offset+112,8);
-		(*offset)+=120;
+		set_bits(grib1->buffer, 43, start_offset, 24);
+		set_bits(grib1->buffer, msg->md.ens_type, grib1->offset + 96, 8);
+		set_bits(grib1->buffer, msg->md.perturb_num, grib1->offset + 104, 8);
+		set_bits(grib1->buffer, msg->md.nfcst_in_ensemble, grib1->offset + 112, 8);
+		grib1->offset += 120;
 		if (warned_ensemble == 0) {
 			fprintf(stderr,"Notice: the 'Ensemble type code', the 'Perturbation Number', and the\n");
 			fprintf(stderr,"'Number of forecasts in ensemble' from Product Definition Template 4.1 and/or\n");
@@ -1267,156 +1274,77 @@ int grib2_packPDS(GRIBMessage * msg, int grid_number, unsigned char * grib1_buff
 		}
 	} else if (msg->md.derived_fcst_code >= 0) {
 		/* length of the PDS */
-		set_bits(grib1_buffer,42,*offset-224,24);
-		set_bits(grib1_buffer,msg->md.derived_fcst_code,*offset+96,8);
-		set_bits(grib1_buffer,msg->md.nfcst_in_ensemble,*offset+104,8);
-		(*offset)+=112;
+		set_bits(grib1->buffer, 42, start_offset, 24);
+		set_bits(grib1->buffer, msg->md.derived_fcst_code, grib1->offset + 96, 8);
+		set_bits(grib1->buffer, msg->md.nfcst_in_ensemble, grib1->offset + 104, 8);
+		grib1->offset += 112;
 		if (warned_ensemble == 0) {
 			fprintf(stderr,"Notice: the 'Derived forecast code' and the 'Number of forecasts in ensemble'\n");
 			fprintf(stderr,"from Product Definition Template 4.2 and/or Product Definition Template 4.12\n");
 			fprintf(stderr,"have been packed in octets 41 and 42 of the GRIB1 Product Definition Section\n");
-			warned_ensemble=1;
+			warned_ensemble = 1;
 		}
 	}
 	return 0;
-}
+} /* }}} */
 
-int grib2_packGDS(GRIBMessage * msg, int grid_number, unsigned char * grib1_buffer, size_t * offset)
+int grib2_to_grib1_packGDS(GRIBMessage * msg, int grid_number, Buffer * grib1) /* {{{ */
 {
 	int rescomp = 0;
 	int value;
 
 	UNUSED_ARG(grid_number);
 
-	/* NV */
-	set_bits(grib1_buffer,255,*offset+24,8);
-	/* PV */
-	set_bits(grib1_buffer,255,*offset+32,8);
+	/* length of the GDS */
 	switch (msg->md.gds_templ_num) {
-		case 0:
-			/* length of the GDS */
-			set_bits(grib1_buffer,32,*offset,24);
-
-			/* data representation */
-			set_bits(grib1_buffer,0,*offset+40,8);
-
-			/* Ni */
-			set_bits(grib1_buffer,msg->md.nx,*offset+48,16);
-
-			/* Nj */
-			set_bits(grib1_buffer,msg->md.ny,*offset+64,16);
-
-			/* first latitude */
-			value=msg->md.slat*1000.;
-			if (value < 0.0) {
-				value=-value;
-				set_bits(grib1_buffer,1,*offset+80,1);
-				set_bits(grib1_buffer,value,*offset+81,23);
-			} else {
-				set_bits(grib1_buffer,value,*offset+80,24);
-			}
-
-			/* first longitude */
-			value=msg->md.slon*1000.;
-			if (value < 0.0) {
-				value=-value;
-				set_bits(grib1_buffer,1,*offset+104,1);
-				set_bits(grib1_buffer,value,*offset+105,23);
-			} else {
-				set_bits(grib1_buffer,value,*offset+104,24);
-			}
-
-			/* resolution and component flags */
-			if ((msg->md.rescomp & 0x20) == 0x20) {
-				rescomp|=0x80;
-			}
-			if (msg->md.earth_shape == 2) {
-				rescomp|=0x40;
-			}
-			if ((msg->md.rescomp & 0x8) == 0x8) {
-				rescomp|=0x8;
-			}
-			set_bits(grib1_buffer,rescomp,*offset+128,8);
-
-			/* last latitude */
-			value=msg->md.lats.elat*1000.;
-			if (value < 0.0) {
-				value=-value;
-				set_bits(grib1_buffer,1,*offset+136,1);
-				set_bits(grib1_buffer,value,*offset+137,23);
-			} else {
-				set_bits(grib1_buffer,value,*offset+136,24);
-			}
-
-			/* last longitude */
-			value=msg->md.lons.elon*1000.;
-			if (value < 0.0) {
-				value=-value;
-				set_bits(grib1_buffer,1,*offset+160,1);
-				set_bits(grib1_buffer,value,*offset+161,23);
-			} else {
-				set_bits(grib1_buffer,value,*offset+160,24);
-			}
-
-			/* Di increment */
-			value=msg->md.xinc.loinc*1000.;
-			if (value < 0.0) {
-				value=-value;
-				set_bits(grib1_buffer,1,*offset+184,1);
-				set_bits(grib1_buffer,value,*offset+185,15);
-			} else {
-				set_bits(grib1_buffer,value,*offset+184,16);
-			}
-
-			/* Dj increment */
-			value=msg->md.yinc.lainc*1000.;
-			if (value < 0.) {
-				value=-value;
-				set_bits(grib1_buffer,1,*offset+200,1);
-				set_bits(grib1_buffer,value,*offset+201,15);
-			} else {
-				set_bits(grib1_buffer,value,*offset+200,16);
-			}
-
-			/* scanning mode */
-			set_bits(grib1_buffer,msg->md.scan_mode,*offset+216,8);
-
-			/* reserved */
-			set_bits(grib1_buffer,0,*offset+224,32);
-			(*offset)+=256;
+		case  0:
+			append_bits(grib1, 32, 24);
 			break;
 
 		case 30:
-			/* length of the GDS */
-			set_bits(grib1_buffer,42,*offset,24);
+			append_bits(grib1, 42, 24);
+			break;
 
+		default:
+			fprintf(stderr,"Unable to map Grid Definition Template %d into GRIB1\n",msg->md.gds_templ_num);
+			return -1;
+	}
+
+	/* NV */
+	append_bits(grib1, 255, 8);
+
+	/* PV */
+	append_bits(grib1, 255, 8);
+
+	switch (msg->md.gds_templ_num) {
+		case 0:
 			/* data representation */
-			set_bits(grib1_buffer,3,*offset+40,8);
+			append_bits(grib1, 0, 8);
 
-			/* Nx */
-			set_bits(grib1_buffer,msg->md.nx,*offset+48,16);
+			/* Ni */
+			append_bits(grib1, msg->md.nx, 16);
 
-			/* Ny */
-			set_bits(grib1_buffer,msg->md.ny,*offset+64,16);
+			/* Nj */
+			append_bits(grib1, msg->md.ny, 16);
 
 			/* first latitude */
-			value=msg->md.slat*1000.;
-			if (value < 0.) {
-				value=-value;
-				set_bits(grib1_buffer,1,*offset+80,1);
-				set_bits(grib1_buffer,value,*offset+81,23);
+			value = msg->md.slat * 1000.0;
+			if (value < 0.0) {
+				value = -value;
+				append_bits(grib1, 1, 1);
+				append_bits(grib1, value, 23);
 			} else {
-				set_bits(grib1_buffer,value,*offset+80,24);
+				append_bits(grib1, value, 24);
 			}
 
 			/* first longitude */
-			value=msg->md.slon*1000.;
-			if (value < 0.) {
-				value=-value;
-				set_bits(grib1_buffer,1,*offset+104,1);
-				set_bits(grib1_buffer,value,*offset+105,23);
+			value = msg->md.slon * 1000.0;
+			if (value < 0.0) {
+				value = -value;
+				append_bits(grib1, 1, 1);
+				append_bits(grib1, value, 23);
 			} else {
-				set_bits(grib1_buffer,value,*offset+104,24);
+				append_bits(grib1, value, 24);
 			}
 
 			/* resolution and component flags */
@@ -1429,75 +1357,163 @@ int grib2_packGDS(GRIBMessage * msg, int grid_number, unsigned char * grib1_buff
 			if ((msg->md.rescomp & 0x8) == 0x8) {
 				rescomp|=0x8;
 			}
-			set_bits(grib1_buffer,rescomp,*offset+128,8);
+			append_bits(grib1, rescomp, 8);
+
+			/* last latitude */
+			value = msg->md.lats.elat * 1000.0;
+			if (value < 0.0) {
+				value = -value;
+				append_bits(grib1, 1, 1);
+				append_bits(grib1, value, 23);
+			} else {
+				append_bits(grib1, value, 24);
+			}
+
+			/* last longitude */
+			value = msg->md.lons.elon * 1000.0;
+			if (value < 0.0) {
+				value = -value;
+				append_bits(grib1, 1, 1);
+				append_bits(grib1, value, 23);
+			} else {
+				append_bits(grib1, value, 24);
+			}
+
+			/* Di increment */
+			value = msg->md.xinc.loinc * 1000.0;
+			if (value < 0.0) {
+				value = -value;
+				append_bits(grib1, 1, 1);
+				append_bits(grib1, value, 15);
+			} else {
+				append_bits(grib1, value, 16);
+			}
+
+			/* Dj increment */
+			value = msg->md.yinc.lainc * 1000.0;
+			if (value < 0.0) {
+				value = -value;
+				append_bits(grib1, 1, 1);
+				append_bits(grib1, value, 15);
+			} else {
+				append_bits(grib1, value, 16);
+			}
+
+			/* scanning mode */
+			append_bits(grib1, msg->md.scan_mode, 8);
+
+			/* reserved */
+			append_bits(grib1, 0, 32);
+			break;
+
+		case 30:
+			/* data representation */
+			append_bits(grib1, 3, 8);
+
+			/* Nx */
+			append_bits(grib1, msg->md.nx, 16);
+
+			/* Ny */
+			append_bits(grib1, msg->md.ny, 16);
+
+			/* first latitude */
+			value = msg->md.slat * 1000.0;
+			if (value < 0.0) {
+				value = -value;
+				append_bits(grib1, 1, 1);
+				append_bits(grib1, value, 23);
+			} else {
+				append_bits(grib1, value, 24);
+			}
+
+			/* first longitude */
+			value = msg->md.slon * 1000.0;
+			if (value < 0.) {
+				value = -value;
+				append_bits(grib1, 1, 1);
+				append_bits(grib1, value, 23);
+			} else {
+				append_bits(grib1, value, 24);
+			}
+
+			/* resolution and component flags */
+			if ((msg->md.rescomp & 0x20) == 0x20) {
+				rescomp |= 0x80;
+			}
+			if (msg->md.earth_shape == 2) {
+				rescomp |= 0x40;
+			}
+			if ((msg->md.rescomp & 0x08) == 0x08) {
+				rescomp |= 0x08;
+			}
+			append_bits(grib1, rescomp, 8);
 
 			/* LoV */
-			value=msg->md.lons.lov*1000.;
-			if (value < 0.) {
-				value=-value;
-				set_bits(grib1_buffer,1,*offset+136,1);
-				set_bits(grib1_buffer,value,*offset+137,23);
+			value = msg->md.lons.lov * 1000.0;
+			if (value < 0.0) {
+				value = -value;
+				append_bits(grib1, 1, 1);
+				append_bits(grib1, value, 23);
 			} else {
-				set_bits(grib1_buffer,value,*offset+136,24);
+				append_bits(grib1, value, 24);
 			}
 
 			/* Dx */
-			value=msg->md.xinc.dxinc+0.5;
-			set_bits(grib1_buffer,value,*offset+160,24);
+			value = msg->md.xinc.dxinc + 0.5;
+			append_bits(grib1, value, 24);
 
 			/* Dy */
-			value=msg->md.yinc.dyinc+0.5;
-			set_bits(grib1_buffer,value,*offset+184,24);
+			value = msg->md.yinc.dyinc + 0.5;
+			append_bits(grib1, value, 24);
 
 			/* projection center flag */
-			set_bits(grib1_buffer,msg->md.proj_flag,*offset+208,8);
+			append_bits(grib1, msg->md.proj_flag, 8);
 
 			/* scanning mode */
-			set_bits(grib1_buffer,msg->md.scan_mode,*offset+216,8);
+			append_bits(grib1, msg->md.scan_mode, 8);
 
 			/* latin1 */
-			value=msg->md.latin1*1000.;
-			if (value < 0.) {
-				value=-value;
-				set_bits(grib1_buffer,1,*offset+224,1);
-				set_bits(grib1_buffer,value,*offset+225,23);
+			value = msg->md.latin1 * 1000.0;
+			if (value < 0.0) {
+				value = -value;
+				append_bits(grib1, 1, 1);
+				append_bits(grib1, value, 23);
 			} else {
-				set_bits(grib1_buffer,value,*offset+224,24);
+				append_bits(grib1, value, 24);
 			}
 
 			/* latin2 */
-			value=msg->md.latin2*1000.;
-			if (value < 0.) {
-				value=-value;
-				set_bits(grib1_buffer,1,*offset+248,1);
-				set_bits(grib1_buffer,value,*offset+249,23);
+			value = msg->md.latin2 * 1000.0;
+			if (value < 0.0) {
+				value = -value;
+				append_bits(grib1, 1, 1);
+				append_bits(grib1, value, 23);
 			} else {
-				set_bits(grib1_buffer,value,*offset+248,24);
+				append_bits(grib1, value, 24);
 			}
 
 			/* latitude of southern pole of projection */
 			value = msg->md.splat * 1000.0;
-			if (value < 0.) {
-				value=-value;
-				set_bits(grib1_buffer,1,*offset+272,1);
-				set_bits(grib1_buffer,value,*offset+273,23);
+			if (value < 0.0) {
+				value = -value;
+				append_bits(grib1, 1, 1);
+				append_bits(grib1, value, 23);
 			} else {
-				set_bits(grib1_buffer,value,*offset+272,24);
+				append_bits(grib1, value, 24);
 			}
 
 			/* longitude of southern pole of projection */
 			value = msg->md.splon * 1000.0;
-			if (value < 0.) {
-				value=-value;
-				set_bits(grib1_buffer,1,*offset+296,1);
-				set_bits(grib1_buffer,value,*offset+297,23);
+			if (value < 0.0) {
+				value = -value;
+				append_bits(grib1, 1, 1);
+				append_bits(grib1, value, 23);
 			} else {
-				set_bits(grib1_buffer,value,*offset+296,24);
+				append_bits(grib1, value, 24);
 			}
 
 			/* reserved */
-			set_bits(grib1_buffer,0,*offset+320,16);
-			(*offset)+=336;
+			append_bits(grib1, 0, 16);
 			break;
 
 		default:
@@ -1505,72 +1521,71 @@ int grib2_packGDS(GRIBMessage * msg, int grid_number, unsigned char * grib1_buff
 			return -1;
 	}
 	return 0;
-}
+} /* }}} */
 
-int grib2_packBMS(GRIBMessage * msg, int grid_number, unsigned char * grib1_buffer, size_t * offset, size_t num_points)
+int grib2_to_grib1_packBMS(GRIBMessage * msg, int grid_number, Buffer * grib1, unsigned int num_points) /* {{{ */
 {
-	int length = 6 + (num_points + 7) / 8;
-	int ub = 8 - (num_points % 8);
-	size_t n;
-	size_t off;
+	int length = 6 + (num_points + 7) / 8; /* length in bytes */
+	int unused = 8 - (num_points % 8); /* unused bits */
+	unsigned int n;
 
 	/* length of the BMS */
-	set_bits(grib1_buffer,length,*offset,24);
+	append_bits(grib1, length, 24);
 
 	/* unused bits at end of section */
-	set_bits(grib1_buffer,ub,*offset+24,8);
+	append_bits(grib1, unused, 8);
 
 	/* table reference */
-	set_bits(grib1_buffer,0,*offset+32,16);
+	append_bits(grib1, 0, 16);
 
 	/* the bitmap */
-	off = *offset + 48;
 	for (n = 0; n < num_points; n++) {
-		set_bits(grib1_buffer,msg->grids[grid_number].md.bitmap[n],off++,1);
+		append_bits(grib1, msg->grids[grid_number].md.bitmap[n], 1);
 	}
-	*offset += length * 8;
+
+	grib1->offset += unused;
 
 	return 0;
-}
+} /* }}} */
 
-int grib2_packBDS(GRIBMessage * msg, int grid_number, unsigned char * grib1_buffer, size_t * offset, int * pvals, size_t num_to_pack, int pack_width)
+int grib2_to_grib1_packBDS(GRIBMessage * msg, int grid_number, Buffer * grib1, int * pvals, size_t num_to_pack, int pack_width) /* {{{ */
 {
-	int length = 11 + (num_to_pack * pack_width + 7) / 8;
+	int length = 11 + (num_to_pack * pack_width + 7) / 8; /* length in bytes */
+	int unused = (length - 11) * 8 - (num_to_pack * pack_width); /* unused bits */
 	size_t m;
-	size_t off;
 	int E;
-	int ibm_rep;
+	int32_t ibm_rep;
 
 	/* length of the BDS */
-	set_bits(grib1_buffer, length, *offset, 24);
+	append_bits(grib1, length, 24);
 
 	/* flag */
-	set_bits(grib1_buffer, 0, *offset + 24, 4);
+	append_bits(grib1, 0, 4);
 
 	/* unused bits */
-	set_bits(grib1_buffer, (length - 11) * 8 - (num_to_pack * pack_width), *offset + 28, 4);
+	append_bits(grib1, unused, 4);
 
 	/* scale factor E */
 	E = msg->grids[grid_number].md.E;
 	if (E < 0) {
 		E = -E + 0x8000;
 	}
-	set_bits(grib1_buffer, E, *offset + 32, 16);
+	append_bits(grib1, E, 16);
 
 	/* Reference value */
 	ibm_rep = ieee2ibm(msg->grids[grid_number].md.R * pow(10.0, msg->grids[grid_number].md.D));
-	memcpy(&grib1_buffer[(*offset+48)/8], &ibm_rep, 4);
+	append_bits(grib1, ibm_rep, 32);
 
 	/* width in bits of each packed value */
-	set_bits(grib1_buffer, pack_width, *offset + 80, 8);
+	append_bits(grib1, pack_width, 8);
 
 	/* packed data values */
-	off = *offset + 88;
 	for (m = 0; m < num_to_pack; m++) {
-		set_bits(grib1_buffer, pvals[m], off, pack_width);
-		off += pack_width;
+		append_bits(grib1, pvals[m], pack_width);
 	}
 
+	grib1->offset += unused;
+
 	return 0;
-}
+} /* }}} */
 

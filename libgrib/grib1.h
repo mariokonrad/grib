@@ -1,6 +1,11 @@
 #ifndef __GRIB1__H__
 #define __GRIB1__H__
 
+/*
+	http://weather.unisys.com/wxp/Appendices/Formats/GRIB.html
+	http://www.wmo.int/pages/prog/www/WDM/Guides/Guide-binary-2.html
+*/
+
 #ifdef __cplusplus
 extern "C" {
 #endif

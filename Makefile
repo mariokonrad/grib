@@ -8,8 +8,8 @@ CURL_LIB=`curl-config --static-libs`
 CXX=g++
 CC=gcc
 
-CXXFLAGS=-Wall -Wextra -ansi -pedantic -O2
-CFLAGS=-Wall -Wextra -ansi -pedantic -O2 -Ilibgrib
+CXXFLAGS=-Wall -Wextra -ansi -pedantic -ggdb
+CFLAGS=-Wall -Wextra -ansi -pedantic -ggdb -Ilibgrib
 
 all : grib wgrib grib2_to_grib1
 

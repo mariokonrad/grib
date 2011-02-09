@@ -1,5 +1,5 @@
 #include <grib1_unpack.h>
-#include <get_bits.h>
+#include <bits.h>
 #include <conv_float.h>
 #include <stdlib.h>
 #include <string.h>
@@ -509,7 +509,6 @@ static int grib1_unpackIS(GRIBRecord * grib, int (*read_func)(void * buf, unsign
 {
 	unsigned char temp[8];
 	int status;
-	size_t n;
 	size_t num;
 
 	if (read_func == NULL) {
