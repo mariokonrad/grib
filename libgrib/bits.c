@@ -1,4 +1,5 @@
 #include <bits.h>
+#include <stdlib.h>
 
 /* Gets the contents of the various GRIB octets
  *
@@ -23,9 +24,7 @@ int get_bits(const unsigned char * buf, int * loc, size_t off, size_t bits)
 	size_t n;
 
 	/* no work to do */
-	if (bits == 0) {
-		return 0;
-	}
+	if (bits == 0) return 0;
 
 	if (bits > loc_size) {
 		fprintf(stderr,"Error: unpacking %d bits into a %d-bit field\n", bits, loc_size);
@@ -102,9 +101,7 @@ int set_bits(unsigned char * buf, int src, size_t off, size_t bits)
 	size_t n;
 
 	/* no work to do */
-	if (bits == 0) {
-		return 0;
-	}
+	if (bits == 0) return 0;
 
 	if (bits > src_size) {
 		fprintf(stderr,"Error: packing %d bits from a %d-bit field\n",bits,src_size);
@@ -166,13 +163,30 @@ int set_bits(unsigned char * buf, int src, size_t off, size_t bits)
  * @retval 0 Success
  * @retval -1 Failure
  */
-int append_bits(Buffer * buf, int src, size_t bits)
+int append_bits(buffer_t * buf, int src, size_t bits)
 {
-	if (set_bits(buf->buffer, src, buf->offset, bits) != 0) {
-		return -1;
-	}
+	if (set_bits(buf->buffer, src, buf->offset, bits) != 0) return -1;
 	buf->offset += bits;
 	return 0;
 }
 
+int buffer_alloc(buffer_t * buf, unsigned int length)
+{
+	if (buf == NULL) return -1;
+	buffer_free(buf);
+	buf->length = length;
+	buf->offset = 0;
+	buf->buffer = (unsigned char *)malloc(length);
+	return 0;
+}
+
+void buffer_free(buffer_t * buf)
+{
+	if (buf == NULL) return;
+	if (buf->buffer != NULL) {
+		free(buf->buffer);
+	}
+	buf->length = 0;
+	buf->offset = 0;
+}
 

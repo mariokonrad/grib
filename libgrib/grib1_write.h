@@ -7,8 +7,8 @@
 extern "C" {
 #endif
 
-int grib1_write_raw(unsigned char * buf, unsigned int len, int (write_func)(const void *, unsigned int));
-int grib1_write(GRIBRecord * grib, int (write_func)(const void *, unsigned int));
+int grib1_write_raw(unsigned char * buf, unsigned int len, int (*write_func)(const void *, unsigned int));
+int grib1_write(GRIBRecord * grib, int (*write_func)(const void *, unsigned int));
 
 #ifdef __cplusplus
 }

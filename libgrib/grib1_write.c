@@ -1,7 +1,7 @@
 #include <grib1_write.h>
 #include <bits.h>
 
-int grib1_write_raw(unsigned char * buf, unsigned int len, int (write_func)(const void *, unsigned int))
+int grib1_write_raw(unsigned char * buf, unsigned int len, int (*write_func)(const void *, unsigned int))
 {
 	const char * HEAD = "GRIB";
 	const char * TAIL = "7777";
@@ -36,7 +36,7 @@ int grib1_write_raw(unsigned char * buf, unsigned int len, int (write_func)(cons
 	return 0;
 }
 
-int grib1_write(GRIBRecord * grib, int (write_func)(const void *, unsigned int))
+int grib1_write(GRIBRecord * grib, int (*write_func)(const void *, unsigned int))
 {
 	if (grib == NULL) {
 		return -1;

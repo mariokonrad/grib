@@ -9,9 +9,13 @@
 #include <cerrno>
 #include <ctime>
 #include <curl/curl.h>
+#include <grib2_conv.h>
 
-class GRIB
+class GRIB // {{{
 {
+	private:
+		typedef std::vector<std::string> Levels;
+		typedef std::vector<std::string> Vars;
 	public:
 		enum Grid { GRID_2P5, GRID_1P0, GRID_0P5 };
 		enum Cycle { CYCLE_00, CYCLE_06, CYCLE_12, CYCLE_18 };
@@ -59,16 +63,14 @@ class GRIB
 						;
 				}
 		};
-	private:
-		typedef std::vector<std::string> Levels;
-		typedef std::vector<std::string> Vars;
+
 		typedef std::vector<uint8_t> Data;
+		typedef Data::const_iterator const_iterator;
+		typedef Data::value_type value_type;
 	private:
 		Levels levels;
 		Vars vars;
-	private:
 		Data data;
-	private:
 		Grid grid;
 		Cycle cycle;
 		Region region;
@@ -107,8 +109,10 @@ class GRIB
 		std::string url() const;
 		int fetch();
 
-		void write_data(std::ostream &) const;
 		friend std::ostream & operator<<(std::ostream &, const GRIB &);
+
+		const_iterator begin() const;
+		const_iterator end() const;
 };
 
 GRIB::GRIB(Grid grid)
@@ -339,14 +343,36 @@ std::string GRIB::error_string(int code)
 	return curl_easy_strerror(static_cast<CURLcode>(code));
 }
 
-void GRIB::write_data(std::ostream & os) const
-{
-	std::copy(data.begin(), data.end(), std::ostream_iterator<Data::value_type>(os));
-}
-
 std::ostream & operator<<(std::ostream & os, const GRIB & grib)
 {
 	return os << grib.url();
+}
+
+GRIB::const_iterator GRIB::begin() const
+{
+	return data.begin();
+}
+
+GRIB::const_iterator GRIB::end() const
+{
+	return data.end();
+}
+
+// }}}
+
+static GRIB::const_iterator grib2_begin;
+static GRIB::const_iterator grib2_i;
+static GRIB::const_iterator grib2_end;
+static GRIB::Data grib1;
+
+static int read_func(void * buf, unsigned int len)
+{
+	if (grib2_i == grib2_end) return 0;
+
+}
+
+static int write_func(const void * buf, unsigned int len)
+{
 }
 
 int main(int, char **)
@@ -370,12 +396,17 @@ int main(int, char **)
 			break;
 		}
 
+		grib2_begin = grib.begin();
+		grib2_i = grib.begin();
+		grib2_end = grib.end();
+		grib2_to_grib1_conv(read_func, write_func);
+
 		std::ofstream ofs("test.grb2");
 		if (!ofs) {
 			printf("ERROR: cannot open file\n");
 			break;
 		}
-		grib.write_data(ofs);
+		std::copy(grib.begin(), grib.end(), std::ostream_iterator<GRIB::value_type>(ofs));
 	}
 
 	return 0;
