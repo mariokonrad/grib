@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-int grib2_unpack(GRIBMessage * grib, int (*read_func)(void * buf, unsigned int len));
+int grib2_unpack(GRIBMessage * grib, int (*read_func)(void *, unsigned int, void *), void * ptr);
 
 #ifdef __cplusplus
 }

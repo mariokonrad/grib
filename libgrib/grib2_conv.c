@@ -1593,7 +1593,7 @@ int grib2_to_grib1_packBDS(GRIBMessage * msg, int grid_number, buffer_t * grib1,
 } /* }}} */
 
 
-int grib2_to_grib1_conv(int (*read_func)(void *, unsigned int), int (*write_func)(const void *, unsigned int)) /* {{{ */
+int grib2_to_grib1_conv(int (*read_func)(void *, unsigned int, void *), void * read_ptr, int (*write_func)(const void *, unsigned int, void *), void * write_ptr) /* {{{ */
 {
 	int m;
 	unsigned int cnt;
@@ -1615,7 +1615,7 @@ int grib2_to_grib1_conv(int (*read_func)(void *, unsigned int), int (*write_func
 	grib_msg.buffer = NULL;
 	grib_msg.grids = NULL;
 
-	while (grib2_unpack(&grib_msg, read_func) == 0) {
+	while (grib2_unpack(&grib_msg, read_func, read_ptr) == 0) {
 		for (i_grid = 0; i_grid < grib_msg.num_grids; ++i_grid) {
 			/* calculate the octet length of the GRIB1 grid (minus the Indicator and End
 			   Sections, which are both fixed in length */
@@ -1721,7 +1721,7 @@ int grib2_to_grib1_conv(int (*read_func)(void *, unsigned int), int (*write_func
 			free(pvals);
 
 			/* output the GRIB1 grid */
-			if (grib1_write_raw(grib1.buffer, length, write_func) != 0) {
+			if (grib1_write_raw(grib1.buffer, length, write_func, write_ptr) != 0) {
 				buffer_free(&grib1);
 				fprintf(stderr, "%s:%d: Cannot write GRIB1 data\n", __FILE__, __LINE__);
 				return -1;

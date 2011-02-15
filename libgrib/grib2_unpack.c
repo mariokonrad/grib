@@ -598,7 +598,7 @@ static int grib2_unpackDS(GRIBMessage * grib, int grid_num) /* {{{ */
 	return 0;
 } /* }}} */
 
-static int search_next_message(unsigned char * temp, int (*read_func)(void * buf, unsigned int len))
+static int search_next_message(unsigned char * temp, int (*read_func)(void * buf, unsigned int len, void * ptr), void * ptr)
 {
 	int n;
 
@@ -609,7 +609,7 @@ static int search_next_message(unsigned char * temp, int (*read_func)(void * buf
 					for (n = 0; n < 3; n++) {
 						temp[n] = temp[n+1];
 					}
-					if (read_func(&temp[3], 1) == 0) {
+					if (read_func(&temp[3], 1, ptr) == 0) {
 						return -1;
 					}
 					break;
@@ -620,7 +620,7 @@ static int search_next_message(unsigned char * temp, int (*read_func)(void * buf
 							for (n = 0; n < 2; n++) {
 								temp[n] = temp[n+2];
 							}
-							if (read_func(&temp[2], 2) == 0) {
+							if (read_func(&temp[2], 2, ptr) == 0) {
 								return -1;
 							}
 							break;
@@ -629,12 +629,12 @@ static int search_next_message(unsigned char * temp, int (*read_func)(void * buf
 							switch(temp[3]) {
 								case 0x47:
 									temp[0] = temp[3];
-									if (read_func(&temp[1], 3) == 0) {
+									if (read_func(&temp[1], 3, ptr) == 0) {
 										return -1;
 									}
 									break;
 								default:
-									if (read_func(temp, 4) == 0) {
+									if (read_func(temp, 4, ptr) == 0) {
 										return -1;
 									}
 									break;
@@ -648,7 +648,7 @@ static int search_next_message(unsigned char * temp, int (*read_func)(void * buf
 	return 0;
 }
 
-static int grib2_unpackIS(GRIBMessage * grib_msg, int (*read_func)(void * buf, unsigned int len)) /* {{{ */
+static int grib2_unpackIS(GRIBMessage * grib_msg, int (*read_func)(void * buf, unsigned int len, void * ptr), void * ptr) /* {{{ */
 {
 	unsigned char temp[16];
 	int status;
@@ -679,15 +679,15 @@ static int grib2_unpackIS(GRIBMessage * grib_msg, int (*read_func)(void * buf, u
 	}
 	grib_msg->num_grids = 0;
 
-	if (read_func(temp, 4) != 4) {
+	if (read_func(temp, 4, ptr) != 4) {
 		return -1;
 	}
 
-	if (search_next_message(temp, read_func) != 0) {
+	if (search_next_message(temp, read_func, ptr) != 0) {
 		return -1;
 	}
 
-	if (read_func(&temp[4], 12) == 0) {
+	if (read_func(&temp[4], 12, ptr) == 0) {
 		return -1;
 	}
 
@@ -698,7 +698,7 @@ static int grib2_unpackIS(GRIBMessage * grib_msg, int (*read_func)(void * buf, u
 	grib_msg->buffer = (unsigned char *)malloc((grib_msg->total_len + 4) * sizeof(unsigned char));
 	memcpy(grib_msg->buffer, temp, 16);
 	num = grib_msg->total_len - 16;
-	status = read_func(&grib_msg->buffer[16], num);
+	status = read_func(&grib_msg->buffer[16], num, ptr);
 	if (status != num) {
 		return -1;
 	}
@@ -711,7 +711,7 @@ static int grib2_unpackIS(GRIBMessage * grib_msg, int (*read_func)(void * buf, u
 	return 0;
 } /* }}} */
 
-int grib2_unpack(GRIBMessage * grib, int (*read_func)(void * buf, unsigned int len))
+int grib2_unpack(GRIBMessage * grib, int (*read_func)(void * buf, unsigned int len, void * ptr), void * ptr)
 {
 	int n;
 	int off;
@@ -722,7 +722,7 @@ int grib2_unpack(GRIBMessage * grib, int (*read_func)(void * buf, unsigned int l
 		return -1;
 	}
 
-	if (grib2_unpackIS(grib, read_func) != 0) {
+	if (grib2_unpackIS(grib, read_func, ptr) != 0) {
 		return -1;
 	}
 	if (grib2_unpackIDS(grib) != 0) {

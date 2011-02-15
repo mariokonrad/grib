@@ -6,6 +6,8 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#define UNUSED(p) (void)(p)
+
 static FILE * ofp = NULL;
 
 typedef struct {
@@ -17,8 +19,10 @@ typedef struct {
 static data_buffer_t buf_src = { NULL, 0, 0 };
 static data_buffer_t buf_dst = { NULL, 0, 0 };
 
-static int read_func(void * buf, unsigned int len)
+static int read_func(void * buf, unsigned int len, void * ptr)
 {
+	UNUSED(ptr);
+
 	if (buf == NULL || buf_src.data == NULL || len == 0) return 0;
 	if (buf_src.ofs >= buf_src.len) return 0;
 	
@@ -33,8 +37,10 @@ static int read_func(void * buf, unsigned int len)
 	return len;
 }
 
-static int write_func(const void * buf, unsigned int len)
+static int write_func(const void * buf, unsigned int len, void * ptr)
 {
+	UNUSED(ptr);
+
 	if (buf == NULL || len == 0) return 0;
 
 	if (buf_dst.data == NULL) {
@@ -83,7 +89,7 @@ int main(int argc, char ** argv)
 	}
 	fclose(ifp);
 	
-	grib2_to_grib1_conv(read_func, write_func);
+	grib2_to_grib1_conv(read_func, NULL, write_func, NULL);
 
 	ofp = fopen(argv[2], "wb");
 	if (ofp == NULL) {
