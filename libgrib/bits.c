@@ -185,6 +185,7 @@ void buffer_free(buffer_t * buf)
 	if (buf == NULL) return;
 	if (buf->buffer != NULL) {
 		free(buf->buffer);
+		buf->buffer = NULL;
 	}
 	buf->length = 0;
 	buf->offset = 0;

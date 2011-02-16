@@ -657,6 +657,7 @@ int main(int, char **)
 	GRIB grib(GRIB::GRID_2P5);
 	grib.set(GRIB::Region(35, 5, -15, 15));
 	grib.set(GRIB::CYCLE_00);
+/*
 	grib.add_level(GRIB::LEVEL_10_M_ABOVE_GROUND);
 	grib.add_level(GRIB::LEVEL_MEAN_SEA_LEVEL);
 	grib.add_level(GRIB::LEVEL_SURFACE);
@@ -664,6 +665,9 @@ int main(int, char **)
 	grib.add_var(GRIB::VAR_PRMSL);
 	grib.add_var(GRIB::VAR_UGRD);
 	grib.add_var(GRIB::VAR_VGRD);
+*/
+	grib.add_level(GRIB::LEVEL__ALL);
+	grib.add_var(GRIB::VAR__ALL);
 
 	GRIB::Data grib2;
 
