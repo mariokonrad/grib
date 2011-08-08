@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <cerrno>
 #include <ctime>
+#include <stdint.h>
 #include <curl/curl.h>
 #include <grib2_conv.h>
 
