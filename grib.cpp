@@ -634,6 +634,7 @@ std::ostream & operator<<(std::ostream & os, const GRIB & grib)
 
 // }}}
 
+/* DISABLED {{{
 static int read_func(void * buf, unsigned int len, void * ptr)
 {
 	if (ptr == NULL) return 0;
@@ -655,6 +656,7 @@ static int write_func(const void * buf, unsigned int len, void * ptr)
 	}
 	return len;
 }
+}}} */
 
 int main(int, char **)
 {
