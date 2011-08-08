@@ -10,7 +10,6 @@
 #include <ctime>
 #include <stdint.h>
 #include <curl/curl.h>
-#include <grib2_conv.h>
 
 class GRIB // {{{
 {
@@ -631,6 +630,7 @@ std::ostream & operator<<(std::ostream & os, const GRIB & grib)
 
 // }}}
 
+/* DISABLED {{{
 static int read_func(void * buf, unsigned int len, void * ptr)
 {
 	if (ptr == NULL) return 0;
@@ -652,55 +652,29 @@ static int write_func(const void * buf, unsigned int len, void * ptr)
 	}
 	return len;
 }
+}}} */
 
 int main(int, char **)
 {
-	GRIB grib(GRIB::GRID_2P5);
+	GRIB grib(GRIB::GRID_1P0);
 	grib.set(GRIB::Region(35, 5, -15, 15));
 	grib.set(GRIB::CYCLE_00);
-/*
-	grib.add_level(GRIB::LEVEL_10_M_ABOVE_GROUND);
-	grib.add_level(GRIB::LEVEL_MEAN_SEA_LEVEL);
-	grib.add_level(GRIB::LEVEL_SURFACE);
-	grib.add_var(GRIB::VAR_GUST);
-	grib.add_var(GRIB::VAR_PRMSL);
 	grib.add_var(GRIB::VAR_UGRD);
 	grib.add_var(GRIB::VAR_VGRD);
-*/
-	grib.add_level(GRIB::LEVEL__ALL);
-	grib.add_var(GRIB::VAR__ALL);
+	grib.add_level(GRIB::LEVEL_500_MB);
+	grib.set_time(0);
 
 	GRIB::Data grib2;
-
-	for (int i = 0; i < 24; i += 6) {
-		grib.set_time(i);
-
-		GRIB::Data data;
-		printf("url: [%s]\n", grib.url().c_str());
-		if (grib.fetch(data)) {
-			printf("ERROR: %s\n", GRIB::error_string(errno).c_str());
-			break;
-		}
-		std::copy(data.begin(), data.end(), std::back_inserter(grib2));
+	printf("url: [%s]\n", grib.url().c_str());
+	if (grib.fetch(grib2)) {
+		printf("ERROR: %s\n", GRIB::error_string(errno).c_str());
+		return -1;
 	}
-
-	GRIB::Data grib1;
-	GRIB::DataRange range(grib2.begin(), grib2.end());
-	grib2_to_grib1_conv(read_func, &range, write_func, &grib1);
 
 	if (grib2.size()) {
 		std::ofstream ofs("test.grb2");
 		if (ofs) {
 			std::copy(grib2.begin(), grib2.end(), std::ostream_iterator<GRIB::Data::value_type>(ofs));
-		} else {
-			printf("ERROR: cannot open file\n");
-		}
-	}
-
-	if (grib1.size()) {
-		std::ofstream ofs("test.grb1");
-		if (ofs) {
-			std::copy(grib1.begin(), grib1.end(), std::ostream_iterator<GRIB::Data::value_type>(ofs));
 		} else {
 			printf("ERROR: cannot open file\n");
 		}
