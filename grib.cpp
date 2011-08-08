@@ -10,7 +10,10 @@
 #include <ctime>
 #include <stdint.h>
 #include <curl/curl.h>
+
+#if defined(CONV_TO_GRIB1)
 #include <grib2_conv.h>
+#endif
 
 class GRIB // {{{
 {
@@ -655,38 +658,36 @@ static int write_func(const void * buf, unsigned int len, void * ptr)
 
 int main(int, char **)
 {
-	GRIB grib(GRIB::GRID_2P5);
+	GRIB grib(GRIB::GRID_1P0);
 	grib.set(GRIB::Region(35, 5, -15, 15));
 	grib.set(GRIB::CYCLE_00);
-/*
-	grib.add_level(GRIB::LEVEL_10_M_ABOVE_GROUND);
-	grib.add_level(GRIB::LEVEL_MEAN_SEA_LEVEL);
-	grib.add_level(GRIB::LEVEL_SURFACE);
-	grib.add_var(GRIB::VAR_GUST);
-	grib.add_var(GRIB::VAR_PRMSL);
+	grib.add_level(GRIB::LEVEL_500_MB);
 	grib.add_var(GRIB::VAR_UGRD);
 	grib.add_var(GRIB::VAR_VGRD);
-*/
-	grib.add_level(GRIB::LEVEL__ALL);
-	grib.add_var(GRIB::VAR__ALL);
 
 	GRIB::Data grib2;
 
+#if defined(MULTIPLE_MESSAGES)
 	for (int i = 0; i < 24; i += 6) {
 		grib.set_time(i);
+#else
+	grib.set_time(0);
+#endif
 
 		GRIB::Data data;
 		printf("url: [%s]\n", grib.url().c_str());
 		if (grib.fetch(data)) {
 			printf("ERROR: %s\n", GRIB::error_string(errno).c_str());
+#if defined(MULTIPLE_MESSAGES)
 			break;
+#else
+			exit(-1);
+#endif
 		}
 		std::copy(data.begin(), data.end(), std::back_inserter(grib2));
+#if defined(MULTIPLE_MESSAGES)
 	}
-
-	GRIB::Data grib1;
-	GRIB::DataRange range(grib2.begin(), grib2.end());
-	grib2_to_grib1_conv(read_func, &range, write_func, &grib1);
+#endif
 
 	if (grib2.size()) {
 		std::ofstream ofs("test.grb2");
@@ -697,6 +698,10 @@ int main(int, char **)
 		}
 	}
 
+#if defined(CONV_TO_GRIB1)
+	GRIB::Data grib1;
+	GRIB::DataRange range(grib2.begin(), grib2.end());
+	grib2_to_grib1_conv(read_func, &range, write_func, &grib1);
 	if (grib1.size()) {
 		std::ofstream ofs("test.grb1");
 		if (ofs) {
@@ -705,6 +710,7 @@ int main(int, char **)
 			printf("ERROR: cannot open file\n");
 		}
 	}
+#endif
 
 	return 0;
 }

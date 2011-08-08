@@ -13,11 +13,14 @@ CFLAGS=-Wall -Wextra -ansi -pedantic -ggdb -Ilibgrib
 
 all : grib wgrib grib2_to_grib1 grib2_to_grib1_mem
 
-grib : grib.o
-	$(CXX) -o $@ $^ $(CURL_LIB) -Llibgrib -lgrib -lm $(LIB_JASPER)
+grib : libgrib/libgrib.a grib.o
+	$(CXX) -o $@ grib.o $(CURL_LIB) -Llibgrib -lgrib -lm $(LIB_JASPER)
 
 grib.o : grib.cpp
 	$(CXX) -o $@ -c $< $(CXXFLAGS) $(CURL_INCLUDE) -Ilibgrib
+
+libgrib/libgrib.a :
+	$(MAKE) -C libgrib
 
 wgrib : wgrib.o
 	$(CC) -o $@ $^
@@ -35,12 +38,8 @@ grib2_to_grib1_mem : grib2_to_grib1_mem.o
 #	$(CXX) -o $@ -c $< $(CXXFLAGS) -I../grib_libraries/g2clib-1.2.1
 
 clean :
-	rm -f grib
-	rm -f wgrib
-	rm -f grib2decode
-	rm -f grib2_to_grib1
-	rm -f grib2_to_grib1_mem
-	rm -f *.o
+	rm -f *.o grib wgrib grib2decode grib2_to_grib1 grib2_to_grib1_mem
+	$(MAKE) -C libgrib clean
 
 %.o : %.cpp
 	$(CXX) -o $@ -c $< $(CXXFLAGS) $(CURL_INCLUDE)
