@@ -555,14 +555,13 @@ static int grib2_unpackDS(GRIBMessage * grib, int grid_num) /* {{{ */
 	int cnt;
 
 	off = grib->offset + 40;
-	switch (grib->md.drs_templ_num) {
-		case 0:
+	switch (grib->md.drs_templ_num) { /* see table 5.0 */
+		case 0: /* Grid Point Data - Simple Packaging */
 			(grib->grids[grid_num]).gridpoints=(double *)malloc(grib->md.ny * grib->md.nx * sizeof(double));
 			for (n=0; n < grib->md.ny * grib->md.nx; n++) {
 				if (grib->md.bitmap == NULL || grib->md.bitmap[n] == 1) {
 					get_bits(grib->buffer, &pval, off, grib->md.pack_width);
-					grib->grids[grid_num].gridpoints[n] = grib->md.R+pval
-						* pow(2.0, grib->md.E) / pow(10.0, grib->md.D);
+					grib->grids[grid_num].gridpoints[n] = grib->md.R+pval * pow(2.0, grib->md.E) / pow(10.0, grib->md.D);
 					off += grib->md.pack_width;
 				} else {
 					grib->grids[grid_num].gridpoints[n] = GRIB_MISSING_VALUE;
@@ -570,7 +569,7 @@ static int grib2_unpackDS(GRIBMessage * grib, int grid_num) /* {{{ */
 			}
 			break;
 
-		case 40:
+		case 40: /* Grid Point Data - JPEG2000 Compression */
 		case 40000:
 			get_bits(grib->buffer, &len,grib->offset, 32);
 			len = len - 5;

@@ -634,7 +634,8 @@ std::ostream & operator<<(std::ostream & os, const GRIB & grib)
 
 // }}}
 
-/* DISABLED {{{
+#if defined(CONV_TO_GRIB1)
+
 static int read_func(void * buf, unsigned int len, void * ptr)
 {
 	if (ptr == NULL) return 0;
@@ -656,12 +657,13 @@ static int write_func(const void * buf, unsigned int len, void * ptr)
 	}
 	return len;
 }
-}}} */
+
+#endif
 
 int main(int, char **)
 {
 	GRIB grib(GRIB::GRID_1P0);
-	grib.set(GRIB::Region(35, 5, -15, 15));
+	grib.set(GRIB::Region(15, 10, 2, 6));
 	grib.set(GRIB::CYCLE_00);
 	grib.add_level(GRIB::LEVEL_500_MB);
 	grib.add_var(GRIB::VAR_UGRD);
