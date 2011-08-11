@@ -8,7 +8,7 @@ extern "C" {
 #endif
 
 typedef struct {
-	unsigned char * buffer; /* the buffer carrying data, ASSUMPTION: sizeof(unsigned char)==8 */
+	unsigned char * buffer; /* the buffer carrying data, ASSUMPTION: sizeof(unsigned char)==1 */
 	unsigned int length; /* size of allocated buffer in bytes */
 
 	unsigned int offset; /* the write offset within the buffer, measured in bits */
