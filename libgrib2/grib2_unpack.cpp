@@ -1,5 +1,7 @@
 #include <grib2_unpack.hpp>
 
+// http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc.shtml
+
 namespace grib2 {
 
 static int search_next_message(std::istream & is) // {{{
@@ -28,16 +30,20 @@ static int search_next_message(std::istream & is) // {{{
 	return -1;
 } // }}}
 
-int grib2_unpack(Message & grib, std::istream & is)
+int grib2_unpack(message_t & grib, std::istream & is)
 {
-	grib.buffer.clear();
-	grib.grids.clear();
-
-	if (search_next_message(is) < 0) return -1;
-
-	// TODO
-
-	return -1;
+	if (search_next_message(is) < 0) return -1; // consumes "GRIB" indicator
+	try {
+		is >> grib.is;
+		is >> grib.ids;
+/*
+		is >> grib.lus; // TODO: this section may be repeated
+		is >> grib.gds; // TODO: this section may be repeated
+*/
+	} catch (exception &) {
+		return -1;
+	}
+	return 0;
 }
 
 }

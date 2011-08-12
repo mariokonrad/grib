@@ -53,6 +53,19 @@ int main(int, char **)
 	b.get(v, 7, 6);
 	printf("v = %02x : ", v); dump(v); printf("\n");
 
+
+	bitset<uint8_t>::const_iterator i = a.begin();
+	while (i < a.end()) {
+		i.read(w);
+		printf("w = %02x : ", w); dump(w); printf("\n");
+	}
+	printf("\n");
+	i = a.begin();
+	for (; i < a.end(); ++i) {
+		printf("%d", *i);
+	}
+	printf("\n");
+
 	return 0;
 }
 

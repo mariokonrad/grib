@@ -2,6 +2,8 @@
 #define __GRIB2__HPP__
 
 #include <vector>
+#include <istream>
+#include <stdint.h>
 
 #if !defined(GRIB_MISSING_VALUE)
 #define GRIB_MISSING_VALUE (1.e30)
@@ -9,9 +11,9 @@
 
 namespace grib2 {
 
-typedef std::vector<unsigned int> Buffer;
-
-typedef struct {
+/*
+struct Meta
+{
 	int gds_templ_num;
 	int earth_shape;
 	int nx;
@@ -77,36 +79,78 @@ typedef struct {
 	int pack_width;
 	int bms_ind;
 	std::vector<unsigned char> bitmap;
-} Meta;
+};
 
-typedef struct {
+struct Grid
+{
 	Meta meta;
 	std::vector<double> data;
-} Grid;
+};
+*/
 
-typedef struct {
-	Buffer buffer; // entire buffer
-	int offset;  // offset in bytes to next GRIB2 section
-	int total_len;
+struct indicator_section_t
+{
+	uint8_t discipline;
+	uint8_t edition;
+	uint64_t length; // total length of GRIB message in octets (all sections)
+};
 
-	int discipline; // table 0.0
-	int edition;
+struct identification_section_t
+{
+	uint32_t length; // octets
+	uint8_t number;
+	uint16_t originating_center;
+	uint16_t originating_subcenter;
+	uint8_t master_table_version;
+	uint8_t local_table_version;
+	uint8_t significance_ref_time;
+	uint16_t year;
+	uint8_t month;
+	uint8_t day;
+	uint8_t hour;
+	uint8_t minute;
+	uint8_t second;
+	uint8_t production_status;
+	uint8_t data_type;
+};
 
-	int center_id;
-	int sub_center_id;
-	int table_ver;
-	int local_table_ver;
-	int ref_time_type;
-	int yr;
-	int mo;
-	int dy;
-	int time;
-	int prod_status;
-	int data_type;
-	Meta meta;
-	std::vector<Grid> grids;
-} Message;
+struct local_use_section_t
+{
+	uint32_t length;
+	uint8_t number;
+
+	// TODO: data for local use?
+};
+
+struct grid_definition_section_t
+{
+	uint32_t length;
+	uint8_t number;
+	uint8_t source;
+	uint32_t num_datapoints;
+	uint8_t num_optional;
+	uint8_t interpol_list;
+	uint16_t grid_def_templ;
+
+	// TODO
+};
+
+struct message_t
+{
+	indicator_section_t is;
+	identification_section_t ids;
+	local_use_section_t lus; // TODO: may occur multiple times
+	grid_definition_section_t gds; // TODO: may occur multiple times
+};
+
+class exception
+{};
 
 }
+
+std::istream & operator>>(std::istream &, grib2::indicator_section_t &) throw (grib2::exception);
+std::istream & operator>>(std::istream &, grib2::identification_section_t &) throw (grib2::exception);
+std::istream & operator>>(std::istream &, grib2::local_use_section_t &) throw (grib2::exception);
+std::istream & operator>>(std::istream &, grib2::grid_definition_section_t &) throw (grib2::exception);
 
 #endif

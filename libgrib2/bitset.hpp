@@ -2,6 +2,7 @@
 #define __BITSET__HPP__
 
 #include <vector>
+#include <istream>
 
 /// @TODO: support for const_iterator (partially prepared)
 /// @TODO: support for ranges:
@@ -27,7 +28,7 @@ template <typename Block, class Container = std::vector<Block> > class bitset
 		{
 				friend class bitset;
 			private:
-				const bitset * const bs;
+				const bitset * bs;
 				size_type pos;
 			private:
 				const_iterator(const bitset * const bs, size_type pos)
@@ -39,6 +40,18 @@ template <typename Block, class Container = std::vector<Block> > class bitset
 					: bs(NULL)
 					, pos(0)
 				{}
+
+				const_iterator(const const_iterator & other)
+					: bs(other.bs)
+					, pos(other.pos)
+				{}
+
+				const_iterator & operator = (const const_iterator & other)
+				{
+					bs = other.bs;
+					pos = other.pos;
+					return *this;
+				}
 
 				bool operator == (const const_iterator & other) const
 				{
@@ -97,14 +110,14 @@ template <typename Block, class Container = std::vector<Block> > class bitset
 						;
 				}
 
-				template <typename T> void get(T & v, size_type bits = sizeof(T) * BITS_PER_BYTE) const
+				template <typename T> void peek(T & v, size_type bits = sizeof(T) * BITS_PER_BYTE) const
 				{
 					if (bs == NULL) return;
 					if (pos + bits > bs->size()) return;
 					bs->get(v, pos, bits);
 				}
 
-				template <typename T> void getadv(T & v, size_type bits = sizeof(T) * BITS_PER_BYTE)
+				template <typename T> void read(T & v, size_type bits = sizeof(T) * BITS_PER_BYTE)
 				{
 					if (bs == NULL) return;
 					if (pos + bits > bs->size()) return;
@@ -331,6 +344,16 @@ template <typename Block, class Container = std::vector<Block> > class bitset
 			return data.end();
 		}
 
+		const_iterator begin() const
+		{
+			return const_iterator(this, 0);
+		}
+
+		const_iterator end() const
+		{
+			return const_iterator(this, size());
+		}
+
 		/// Appends another bitset to this one.
 		///
 		/// @param[in] bs The bitset to be appended to this one.
@@ -347,6 +370,19 @@ template <typename Block, class Container = std::vector<Block> > class bitset
 		void set(const bitset & bs, size_type ofs)
 		{
 			// TODO
+		}
+
+		/// @TODO: documentation
+		size_type append(std::istream & is, size_type blocks)
+		{
+			size_type i = 0;
+			block_type block;
+			while (is.good() && !is.eof() && i < blocks) {
+				is >> block;
+				append_block(block);
+				++i;
+			}
+			return i;
 		}
 
 		/// Appends the lowest significant bits of the specified data to the
