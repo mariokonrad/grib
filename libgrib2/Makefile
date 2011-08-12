@@ -2,18 +2,18 @@
 
 .PHONY: all clean
 
-CC=gcc
-CFLAGS=-ggdb -Wall -Wextra -ansi -pedantic -I. -I$(HOME)/tmp/grib_libraries/local/include
+CXX=g++
+CXXFLAGS=-ggdb -Wall -Wextra -ansi -pedantic -I.
 
 all : libgrib2.a
 
-libgrib2.a :
+libgrib2.a : grib2_unpack.o
 	ar rcs $@ $^
 
 clean :
 	rm -f *.o
 	rm -f libgrib2.a
 
-%.o : %.c
-	$(CC) -o $@ -c $< $(CFLAGS)
+%.o : %.cpp
+	$(CXX) -o $@ -c $< $(CXXFLAGS)
 

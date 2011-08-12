@@ -601,48 +601,26 @@ static int search_next_message(unsigned char * temp, int (*read_func)(void * buf
 {
 	int n;
 
-	if (strncmp((char *)temp, "GRIB", 4) != 0) {
-		while (temp[0] != 0x47 || temp[1] != 0x52 || temp[2] != 0x49 || temp[3] != 0x42) {
-			switch (temp[1]) {
-				case 0x47:
-					for (n = 0; n < 3; n++) {
-						temp[n] = temp[n+1];
-					}
-					if (read_func(&temp[3], 1, ptr) == 0) {
-						return -1;
-					}
-					break;
-
-				default:
-					switch (temp[2]) {
-						case 0x47:
-							for (n = 0; n < 2; n++) {
-								temp[n] = temp[n+2];
-							}
-							if (read_func(&temp[2], 2, ptr) == 0) {
-								return -1;
-							}
-							break;
-
-						default:
-							switch(temp[3]) {
-								case 0x47:
-									temp[0] = temp[3];
-									if (read_func(&temp[1], 3, ptr) == 0) {
-										return -1;
-									}
-									break;
-								default:
-									if (read_func(temp, 4, ptr) == 0) {
-										return -1;
-									}
-									break;
-							}
-							break;
-					}
-					break;
-			}
+	while (strncmp((const char *)temp, "GRIB", 4) != 0) {
+		if (temp[1] == 'G') {
+			for (n = 0; n < 3; n++) temp[n] = temp[n+1];
+			if (read_func(&temp[3], 1, ptr) <= 0) return -1;
+			continue;
 		}
+
+		if (temp[2] == 'G') {
+			for (n = 0; n < 2; n++) temp[n] = temp[n+2];
+			if (read_func(&temp[2], 2, ptr) <= 0) return -1;
+			continue;
+		}
+
+		if (temp[3] == 'G') {
+			for (n = 0; n < 1; n++) temp[n] = temp[n+3];
+			if (read_func(&temp[1], 3, ptr) <= 0) return -1;
+			continue;
+		}
+
+		if (read_func(temp, 4, ptr) <= 0) return -1;
 	}
 	return 0;
 }
@@ -653,10 +631,6 @@ static int grib2_unpackIS(GRIBMessage * grib_msg, int (*read_func)(void * buf, u
 	int status;
 	int n;
 	size_t num;
-
-	if (read_func == NULL) {
-		return -1;
-	}
 
 	if (grib_msg->buffer != NULL) {
 		free(grib_msg->buffer);
@@ -698,7 +672,7 @@ static int grib2_unpackIS(GRIBMessage * grib_msg, int (*read_func)(void * buf, u
 	memcpy(grib_msg->buffer, temp, 16);
 	num = grib_msg->total_len - 16;
 	status = read_func(&grib_msg->buffer[16], num, ptr);
-	if (status != num) {
+	if (status != (int)num) {
 		return -1;
 	}
 
