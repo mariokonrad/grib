@@ -112,7 +112,7 @@ template <typename Block, class Container = std::vector<Block> > class bitset
 					*this += bits;
 				}
 
-				const_operator & operator += (size_type ofs)
+				const_iterator & operator += (size_type ofs)
 				{
 					if (bs != NULL && pos < bs->size()) {
 						pos += ofs;
@@ -121,7 +121,7 @@ template <typename Block, class Container = std::vector<Block> > class bitset
 					return *this;
 				}
 
-				const_operator & operator -= (size_type ofs)
+				const_iterator & operator -= (size_type ofs)
 				{
 					if (bs != NULL) {
 						pos = (ofs > pos) ? 0 : pos - ofs;
@@ -129,7 +129,7 @@ template <typename Block, class Container = std::vector<Block> > class bitset
 					return *this;
 				}
 
-				const_operator & operator ++ () // ++const_iterator
+				const_iterator & operator ++ () // ++const_iterator
 				{
 					if (bs != NULL && pos < bs->size()) {
 						++pos;
@@ -137,7 +137,7 @@ template <typename Block, class Container = std::vector<Block> > class bitset
 					return *this;
 				}
 
-				const_operator & operator -- () // --const_iterator
+				const_iterator & operator -- () // --const_iterator
 				{
 					if (bs != NULL && pos > 0) {
 						--pos;
@@ -145,7 +145,7 @@ template <typename Block, class Container = std::vector<Block> > class bitset
 					return *this;
 				}
 
-				const_operator operator ++ (int) // const_iterator++
+				const_iterator operator ++ (int) // const_iterator++
 				{
 					const_iterator res(*this);
 					if (bs != NULL && pos < bs->size()) {
@@ -154,7 +154,7 @@ template <typename Block, class Container = std::vector<Block> > class bitset
 					return res;
 				}
 
-				const_operator operator -- (int) // const_iterator--
+				const_iterator operator -- (int) // const_iterator--
 				{
 					const_iterator res(*this);
 					if (bs != NULL && pos > 0) {
@@ -241,7 +241,7 @@ template <typename Block, class Container = std::vector<Block> > class bitset
 		/// @param[in] bits Number of bits to be read.
 		///            If the number of bits is smaller than what the specified data can
 		///            hold, only the least significant bits are being set.
-		void get_block(block_type & v, size_type ofs, size_type bits = BITS_PER_BLOCK)
+		void get_block(block_type & v, size_type ofs, size_type bits = BITS_PER_BLOCK) const
 		{
 			if (bits <= 0) return;
 			if (ofs + bits > size()) return;
@@ -271,8 +271,8 @@ template <typename Block, class Container = std::vector<Block> > class bitset
 		///
 		/// @param[in] begin Start position of the data (inclusive)
 		/// @param[in] end End position of the data (exclusive)
-		bitset(Conainer::const_iterator begin, Container::const_iterator end)
-			: pos(0)
+		bitset(typename Container::const_iterator begin, typename Container::const_iterator end)
+			: pos((end - begin) * BITS_PER_BLOCK)
 			, data(begin, end)
 		{}
 
@@ -293,6 +293,13 @@ template <typename Block, class Container = std::vector<Block> > class bitset
 		void reserve(size_type bits)
 		{
 			extend(bits);
+		}
+
+		/// Clears the bit set.
+		void clear()
+		{
+			data.clear();
+			pos = 0;
 		}
 
 		/// Returns the bit at the specified position.
@@ -410,27 +417,31 @@ template <typename Block, class Container = std::vector<Block> > class bitset
 			v = T(); // clear result
 
 			size_type u_bits = BITS_PER_BLOCK - (ofs % BITS_PER_BLOCK); // number of bits unused within the current block
-			size_type q_bits = (ofs + bits) % BITS_PER_BLOCK; // number of bits unused within the last block
 
 			block_type block;
 
 			if (u_bits > 0) {
 				get_block(block, ofs, u_bits);
+				if (bits < u_bits) {
+					block >>= (u_bits - bits);
+					bits = 0;
+				} else {
+					bits -= u_bits;
+				}
 				v =+ block;
 				ofs += u_bits;
-				bits -= u_bits;
 			}
 
-			for (; bits > q_bits; bits -= BITS_PER_BLOCK) {
+			for (; bits >= BITS_PER_BLOCK; bits -= BITS_PER_BLOCK) {
 				get_block(block, ofs);
 				v <<= BITS_PER_BLOCK;
 				v += block;
 				ofs += BITS_PER_BLOCK;
 			}
 
-			if (q_bits > 0) {
-				get_block(block, ofs, q_bits);
-				v <<= q_bits;
+			if (bits > 0) {
+				get_block(block, ofs, bits);
+				v <<= bits;
 				v += block;
 			}
 		}

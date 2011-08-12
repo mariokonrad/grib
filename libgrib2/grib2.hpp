@@ -9,6 +9,8 @@
 
 namespace grib2 {
 
+typedef std::vector<unsigned int> Buffer;
+
 typedef struct {
 	int gds_templ_num;
 	int earth_shape;
@@ -79,15 +81,17 @@ typedef struct {
 
 typedef struct {
 	Meta meta;
-	std::vector<double> gridpoints;
+	std::vector<double> data;
 } Grid;
 
 typedef struct {
-	std::vector<unsigned char> buffer; // entire buffer
+	Buffer buffer; // entire buffer
 	int offset;  // offset in bytes to next GRIB2 section
 	int total_len;
-	int disc;
-	int ed_num;
+
+	int discipline; // table 0.0
+	int edition;
+
 	int center_id;
 	int sub_center_id;
 	int table_ver;
