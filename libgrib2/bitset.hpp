@@ -4,6 +4,8 @@
 #include <vector>
 #include <istream>
 
+class bit_read_exception {};
+
 /// @TODO: support for const_iterator (partially prepared)
 /// @TODO: support for ranges:
 ///        - append(bitset)
@@ -110,21 +112,6 @@ template <typename Block, class Container = std::vector<Block> > class bitset
 						;
 				}
 
-				template <typename T> void peek(T & v, size_type bits = sizeof(T) * BITS_PER_BYTE) const
-				{
-					if (bs == NULL) return;
-					if (pos + bits > bs->size()) return;
-					bs->get(v, pos, bits);
-				}
-
-				template <typename T> void read(T & v, size_type bits = sizeof(T) * BITS_PER_BYTE)
-				{
-					if (bs == NULL) return;
-					if (pos + bits > bs->size()) return;
-					bs->get(v, pos, bits);
-					*this += bits;
-				}
-
 				const_iterator & operator += (size_type ofs)
 				{
 					if (bs != NULL && pos < bs->size()) {
@@ -174,6 +161,21 @@ template <typename Block, class Container = std::vector<Block> > class bitset
 						--pos;
 					}
 					return res;
+				}
+
+				template <typename T> void peek(T & v, size_type bits = sizeof(T) * BITS_PER_BYTE) const throw (bit_read_exception)
+				{
+					if (bs == NULL) return;
+					if (pos + bits > bs->size()) return;
+					bs->get(v, pos, bits);
+				}
+
+				template <typename T> void read(T & v, size_type bits = sizeof(T) * BITS_PER_BYTE) throw (bit_read_exception)
+				{
+					if (bs == NULL) return;
+					if (pos + bits > bs->size()) throw bit_read_exception();
+					bs->get(v, pos, bits);
+					*this += bits;
 				}
 		};
 	private:
@@ -378,7 +380,7 @@ template <typename Block, class Container = std::vector<Block> > class bitset
 			size_type i = 0;
 			block_type block;
 			while (is.good() && !is.eof() && i < blocks) {
-				is >> block;
+				is.read(reinterpret_cast<char *>(&block), sizeof(block));
 				append_block(block);
 				++i;
 			}
@@ -444,11 +446,11 @@ template <typename Block, class Container = std::vector<Block> > class bitset
 		///            bits the specified data type can hold.
 		///            If the number of bits is smaller than what the specified data can
 		///            hold, only the least significant bits are being set.
-		template <typename T> void get(T & v, size_type ofs, size_type bits = sizeof(T) * BITS_PER_BYTE) const
+		template <typename T> void get(T & v, size_type ofs, size_type bits = sizeof(T) * BITS_PER_BYTE) const throw (bit_read_exception)
 		{
 			if (bits <= 0) return;
 			if (bits > sizeof(T) * BITS_PER_BYTE) return; // impossible to read more bits than the specified container can hold
-			if (ofs + bits > pos) return; // impossible to read more than available
+			if (ofs + bits > pos) throw bit_read_exception();
 
 			v = T(); // clear result
 

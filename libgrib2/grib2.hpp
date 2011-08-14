@@ -92,7 +92,7 @@ struct indicator_section_t
 {
 	uint8_t discipline;
 	uint8_t edition;
-	uint64_t length; // total length of GRIB message in octets (all sections)
+	uint64_t total_length; // total length of GRIB message in octets (all sections)
 };
 
 struct identification_section_t
@@ -119,7 +119,7 @@ struct local_use_section_t
 	uint32_t length;
 	uint8_t number;
 
-	// TODO: data for local use?
+	std::vector<char> data;
 };
 
 struct grid_definition_section_t
@@ -132,6 +132,102 @@ struct grid_definition_section_t
 	uint8_t interpol_list;
 	uint16_t grid_def_templ;
 
+	union {
+		struct lat_lon_t // template 3.0
+		{
+			uint8_t shape_earth; // table 3.2
+			uint8_t scale_factor_radius;
+			uint32_t scale_value_radius;
+			uint8_t scale_factor_major_axis;
+			uint32_t scale_value_major_axis;
+			uint8_t scale_factor_minor_axis;
+			uint32_t scale_factor_minor_axis;
+			uint32_t num_parallel; // number of points along parallel
+			uint32_t num_meridian; // number of points along meridian
+			uint32_t basic_angle;
+			uint32_t subdiv_basic_angle;
+			uint32_t lat1;
+			uint32_t lon1;
+			uint8_t resolution;
+			uint32_t lat2;
+			uint32_t lon2;
+			uint32_t di; // i-direction increment
+			uint32_t dj; // j-direction increment
+			uint8_t scanning_mode;
+			// TODO: list of number points along each meridian or parallel
+		} lat_lon;
+		// TODO
+	} templ;
+};
+
+struct product_definition_section_t
+{
+	uint32_t length;
+	uint8_t number;
+	uint16_t num_coord_values;
+	uint16_t product_def_templ;
+
+	// TODO
+};
+
+struct data_representation_section_t
+{
+	uint32_t length;
+	uint8_t number;
+	uint32_t num_datapoints;
+	uint16_t rep_templ;
+
+	union {
+		struct gp_simple_t // template 5.0
+		{
+			uint32_t R; // reference value
+			uint16_t E; // binary scale factor
+			uint16_t D; // decimal scale factor
+			uint8_t num_bits;
+			uint8_t type_org; // code table 5.1
+		} gp_simple;
+		struct gp_jpeg2000_t // templte 5.40
+		{
+			uint32_t R; // reference value
+			uint16_t E; // binary scale factor
+			uint16_t D; // decimal scale factor
+			uint8_t num_bits;
+			uint8_t type_org; // code table 5.1
+			uint8_t type_compression; // code table 5.40
+			uint8_t target_compression_ratio;
+		} gp_jpeg2000;
+		struct gp_png_t // template 5.41
+		{
+			uint32_t R; // reference value
+			uint16_t E; // binary scale factor
+			uint16_t D; // decimal scale factor
+			uint8_t num_bits;
+			uint8_t type_org; // code table 5.1
+		} gp_png;
+		struct sd_simple_t // template 5.50
+		{
+			uint32_t R; // reference value
+			uint16_t E; // binary scale factor
+			uint16_t D; // decimal scale factor
+			uint8_t num_bits;
+			uint32_t real;
+		} sd_simple;
+	} templ;
+};
+
+struct bitmap_section_t
+{
+	uint32_t length;
+	uint8_t number;
+	uint8_t bitmap_indicator;
+	std::vector<char> bitmap;
+};
+
+struct data_section_t
+{
+	uint32_t length;
+	uint8_t number;
+
 	// TODO
 };
 
@@ -139,18 +235,20 @@ struct message_t
 {
 	indicator_section_t is;
 	identification_section_t ids;
-	local_use_section_t lus; // TODO: may occur multiple times
-	grid_definition_section_t gds; // TODO: may occur multiple times
+	local_use_section_t lus;
+	grid_definition_section_t gds;
+	product_definition_section_t pds;
+	data_representation_section_t drs;
+	bitmap_section_t bm;
+	data_section_t ds;
 };
 
-class exception
-{};
+class exception {};
+
+class not_implemented {};
+
+int unpack(message_t &, std::istream &);
 
 }
-
-std::istream & operator>>(std::istream &, grib2::indicator_section_t &) throw (grib2::exception);
-std::istream & operator>>(std::istream &, grib2::identification_section_t &) throw (grib2::exception);
-std::istream & operator>>(std::istream &, grib2::local_use_section_t &) throw (grib2::exception);
-std::istream & operator>>(std::istream &, grib2::grid_definition_section_t &) throw (grib2::exception);
 
 #endif

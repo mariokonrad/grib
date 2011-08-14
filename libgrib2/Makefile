@@ -19,12 +19,13 @@ g2dec : g2dec.o libgrib2.a
 g2dec.o : g2dec.cpp
 	$(CXX) -o $@ -c g2dec.cpp $(CXXFLAGS)
 
-libgrib2.a : grib2_unpack.o grib2.o
+libgrib2.a : grib2.o
 	ar rcs $@ $^
 
 clean :
 	rm -f *.o
 	rm -f libgrib2.a
+	rm -f g2dec
 	rm -f *.exe *.stackdump
 
 %.o : %.cpp
