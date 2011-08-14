@@ -22,6 +22,7 @@ std::istream & operator>>(std::istream & is, grib2::identification_section_t & s
 	bitset<uint8_t> b;
 
 	b.reserve(1024);
+
 	if (b.append(is, sizeof(section.length)) != sizeof(section.length)) throw grib2::exception();
 	bitset<uint8_t>::const_iterator i = b.begin();
 	i.read(section.length);
@@ -56,6 +57,7 @@ std::istream & operator>>(std::istream & is, grib2::local_use_section_t & sectio
 	bitset<uint8_t> b;
 
 	b.reserve(64);
+
 	if (b.append(is, sizeof(section.length)) != sizeof(section.length)) throw grib2::exception();
 	bitset<uint8_t>::const_iterator i = b.begin();
 	i.read(section.length);

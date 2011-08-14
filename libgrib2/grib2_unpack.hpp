@@ -5,7 +5,7 @@
 
 namespace grib2 {
 
-int grib2_unpack(message_t &, std::istream &);
+int unpack(message_t &, std::istream &);
 
 }
 

@@ -1,4 +1,5 @@
 #include <grib2_unpack.hpp>
+#include <vector>
 
 // http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc.shtml
 
@@ -30,13 +31,13 @@ static int search_next_message(std::istream & is) // {{{
 	return -1;
 } // }}}
 
-int grib2_unpack(message_t & grib, std::istream & is)
+int unpack(message_t & grib, std::istream & is)
 {
 	if (search_next_message(is) < 0) return -1; // consumes "GRIB" indicator
 	try {
 		is >> grib.is;
-		is >> grib.ids;
 /*
+		is >> grib.ids;
 		is >> grib.lus; // TODO: this section may be repeated
 		is >> grib.gds; // TODO: this section may be repeated
 */
