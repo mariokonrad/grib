@@ -438,7 +438,7 @@ std::cerr << __FILE__ << ":" << __LINE__ << ":  section.length=" << ((section.le
 
 	for (uint32_t dp = 0; dp < drs.num_datapoints; ++dp) {
 		i.read(t, def.num_bits);
-		val = pow(10.0, -def.D) * (def.R.f + t * pow(2.0, def.E));
+		val = pow(10.0, -def.D) * (def.R.f + ldexp(t, def.E));
 std::cerr << __FILE__ << ":" << __LINE__ << ": " << val << std::endl;
 		section.data.push_back(val);
 	}
