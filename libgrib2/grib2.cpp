@@ -339,14 +339,9 @@ static void unpack(std::istream & is, grib2::data_representation_section_t & sec
 	i.read(section.num_datapoints);
 	i.read(section.rep_templ);
 
-	// TODO: proper handling of endianess (regarding the floats)
-
 	switch (section.rep_templ) { // table 5.0
 		case 0: // Grid Point Data - Simple Packing (see Template 5.0)
-			i.read(section.rep_def.gp_simple.R.u);
-			std::swap(section.rep_def.gp_simple.R.a[0], section.rep_def.gp_simple.R.a[3]);
-			std::swap(section.rep_def.gp_simple.R.a[1], section.rep_def.gp_simple.R.a[2]);
-			if (section.rep_def.gp_simple.R.f < EPSILON) section.rep_def.gp_simple.R.f = 0.0f;
+			i.read(section.rep_def.gp_simple.R.u); // data already in IEEE-754 binary float 32
 			i.read(section.rep_def.gp_simple.E);
 			i.read(section.rep_def.gp_simple.D);
 			i.read(section.rep_def.gp_simple.num_bits);
@@ -359,30 +354,21 @@ static void unpack(std::istream & is, grib2::data_representation_section_t & sec
 			throw not_implemented(__FILE__, __LINE__);
 			break;
 		case 40: // Grid Point Data - JPEG2000 Compression (see Template 5.40)
-			i.read(section.rep_def.gp_jpeg2000.R.u);
-			std::swap(section.rep_def.gp_jpeg2000.R.a[0], section.rep_def.gp_jpeg2000.R.a[3]);
-			std::swap(section.rep_def.gp_jpeg2000.R.a[1], section.rep_def.gp_jpeg2000.R.a[2]);
-			if (section.rep_def.gp_jpeg2000.R.f < EPSILON) section.rep_def.gp_jpeg2000.R.f = 0.0f;
+			i.read(section.rep_def.gp_jpeg2000.R.u); // data already in IEEE-754 binary float 32
 			i.read(section.rep_def.gp_jpeg2000.E);
 			i.read(section.rep_def.gp_jpeg2000.D);
 			i.read(section.rep_def.gp_jpeg2000.num_bits);
 			i.read(section.rep_def.gp_jpeg2000.type_org);
 			break;
 		case 41: // Grid Point Data - PNG Compression (see Template 5.41)
-			i.read(section.rep_def.gp_png.R.u);
-			std::swap(section.rep_def.gp_png.R.a[0], section.rep_def.gp_png.R.a[3]);
-			std::swap(section.rep_def.gp_png.R.a[1], section.rep_def.gp_png.R.a[2]);
-			if (section.rep_def.gp_png.R.f < EPSILON) section.rep_def.gp_png.R.f = 0.0f;
+			i.read(section.rep_def.gp_png.R.u); // data already in IEEE-754 binary float 32
 			i.read(section.rep_def.gp_png.E);
 			i.read(section.rep_def.gp_png.D);
 			i.read(section.rep_def.gp_png.num_bits);
 			i.read(section.rep_def.gp_png.type_org);
 			break;
 		case 50: // Spectral Data - Simple Packing (see Template 5.50)
-			i.read(section.rep_def.sd_simple.R.u);
-			std::swap(section.rep_def.sd_simple.R.a[0], section.rep_def.sd_simple.R.a[3]);
-			std::swap(section.rep_def.sd_simple.R.a[1], section.rep_def.sd_simple.R.a[2]);
-			if (section.rep_def.sd_simple.R.f < EPSILON) section.rep_def.sd_simple.R.f = 0.0f;
+			i.read(section.rep_def.sd_simple.R.u); // data already in IEEE-754 binary float 32
 			i.read(section.rep_def.sd_simple.E);
 			i.read(section.rep_def.sd_simple.D);
 			i.read(section.rep_def.sd_simple.num_bits);
@@ -433,13 +419,20 @@ static void unpack_DS_5_0(grib2::octets::const_iterator & i, grib2::data_section
 	section.data.clear();
 	section.data.reserve(drs.num_datapoints);
 
+	double decimal_scale = pow(10.0, -def.D);
+	double binary_scale = pow(2.0, def.E);
+
 std::cerr << __FILE__ << ":" << __LINE__ << ": pos=" << i.get_pos() << std::endl;
 std::cerr << __FILE__ << ":" << __LINE__ << ":  section.length=" << ((section.length-5)*grib2::octets::BITS_PER_BYTE) << "  #p=" << drs.num_datapoints << "  #bits=" << static_cast<int>(def.num_bits) << std::endl;
 
 	for (uint32_t dp = 0; dp < drs.num_datapoints; ++dp) {
 		i.read(t, def.num_bits);
-		val = pow(10.0, -def.D) * (def.R.f + ldexp(t, def.E));
-std::cerr << __FILE__ << ":" << __LINE__ << ": " << val << std::endl;
+		if (def.num_bits == 0) {
+			val = def.R.f;
+		} else {
+			val = decimal_scale * (def.R.f + t * binary_scale);
+		}
+std::cerr << __FILE__ << ":" << __LINE__ << ": " << val << "  D=" << def.D << " E=" << def.E << "  R=" << def.R.f << "  t=" << t << std::endl;
 		section.data.push_back(val);
 	}
 std::cerr << __FILE__ << ":" << __LINE__ << ": pos=" << i.get_pos() << std::endl;

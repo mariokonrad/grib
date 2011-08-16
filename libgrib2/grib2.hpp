@@ -210,7 +210,6 @@ struct data_representation_section_t
 			union {
 				uint32_t u;
 				float f;
-				uint8_t a[4];
 			} R; // IEEE-754 binary 32bit float: reference value
 			int16_t E; // binary scale factor
 			int16_t D; // decimal scale factor
@@ -222,7 +221,6 @@ struct data_representation_section_t
 			union {
 				uint32_t u;
 				float f;
-				uint8_t a[4];
 			} R; // IEEE-754 binary 32bit float: reference value
 			int16_t E; // binary scale factor
 			int16_t D; // decimal scale factor
@@ -236,7 +234,6 @@ struct data_representation_section_t
 			union {
 				uint32_t u;
 				float f;
-				uint8_t a[4];
 			} R; // IEEE-754 binary 32bit float: reference value
 			int16_t E; // binary scale factor
 			int16_t D; // decimal scale factor
@@ -248,7 +245,6 @@ struct data_representation_section_t
 			union {
 				uint32_t u;
 				float f;
-				uint8_t a[4];
 			} R; // IEEE-754 binary 32bit float: reference value
 			int16_t E; // binary scale factor
 			int16_t D; // decimal scale factor
