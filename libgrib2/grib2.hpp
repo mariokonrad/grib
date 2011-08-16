@@ -212,8 +212,8 @@ struct data_representation_section_t
 				float f;
 				uint8_t a[4];
 			} R; // IEEE-754 binary 32bit float: reference value
-			uint16_t E; // binary scale factor
-			uint16_t D; // decimal scale factor
+			int16_t E; // binary scale factor
+			int16_t D; // decimal scale factor
 			uint8_t num_bits;
 			uint8_t type_org; // code table 5.1
 		} gp_simple;
@@ -224,8 +224,8 @@ struct data_representation_section_t
 				float f;
 				uint8_t a[4];
 			} R; // IEEE-754 binary 32bit float: reference value
-			uint16_t E; // binary scale factor
-			uint16_t D; // decimal scale factor
+			int16_t E; // binary scale factor
+			int16_t D; // decimal scale factor
 			uint8_t num_bits;
 			uint8_t type_org; // code table 5.1
 			uint8_t type_compression; // code table 5.40
@@ -238,8 +238,8 @@ struct data_representation_section_t
 				float f;
 				uint8_t a[4];
 			} R; // IEEE-754 binary 32bit float: reference value
-			uint16_t E; // binary scale factor
-			uint16_t D; // decimal scale factor
+			int16_t E; // binary scale factor
+			int16_t D; // decimal scale factor
 			uint8_t num_bits;
 			uint8_t type_org; // code table 5.1
 		} gp_png;
@@ -250,8 +250,8 @@ struct data_representation_section_t
 				float f;
 				uint8_t a[4];
 			} R; // IEEE-754 binary 32bit float: reference value
-			uint16_t E; // binary scale factor
-			uint16_t D; // decimal scale factor
+			int16_t E; // binary scale factor
+			int16_t D; // decimal scale factor
 			uint8_t num_bits;
 			uint32_t real;
 		} sd_simple;
