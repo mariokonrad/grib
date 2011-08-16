@@ -204,7 +204,7 @@ struct data_representation_section_t
 	uint32_t num_datapoints;
 	uint16_t rep_templ;
 
-	union {
+	union rep_def_t {
 		struct gp_simple_t // template 5.0
 		{
 			union {
@@ -255,7 +255,7 @@ struct data_representation_section_t
 			uint8_t num_bits;
 			uint32_t real;
 		} sd_simple;
-	} templ;
+	} rep_def;
 };
 
 struct bitmap_section_t
@@ -270,8 +270,7 @@ struct data_section_t
 {
 	uint32_t length;
 	uint8_t number;
-
-	// TODO
+	std::vector<double> data;
 };
 
 struct message_t

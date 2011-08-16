@@ -48,6 +48,11 @@ template <typename Block, class Container = std::vector<Block> > class bitset
 					, pos(other.pos)
 				{}
 
+				size_type get_pos() const
+				{
+					return pos;
+				}
+
 				const_iterator & operator = (const const_iterator & other)
 				{
 					bs = other.bs;
