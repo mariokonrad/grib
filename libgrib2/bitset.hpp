@@ -4,8 +4,6 @@
 #include <vector>
 #include <istream>
 
-class bit_read_exception {};
-
 /// @TODO: support for const_iterator (partially prepared)
 /// @TODO: support for ranges:
 ///        - append(bitset)
@@ -23,6 +21,8 @@ template <typename Block, class Container = std::vector<Block> > class bitset
 	public:
 		typedef typename Container::size_type size_type;
 		typedef typename Container::const_iterator data_const_iterator;
+
+		class exception : public std::exception {};
 
 		/// @todo: TEST
 		/// @todo: documentation
@@ -163,17 +163,17 @@ template <typename Block, class Container = std::vector<Block> > class bitset
 					return res;
 				}
 
-				template <typename T> void peek(T & v, size_type bits = sizeof(T) * BITS_PER_BYTE) const throw (bit_read_exception)
+				template <typename T> void peek(T & v, size_type bits = sizeof(T) * BITS_PER_BYTE) const throw (exception)
 				{
 					if (bs == NULL) return;
 					if (pos + bits > bs->size()) return;
 					bs->get(v, pos, bits);
 				}
 
-				template <typename T> void read(T & v, size_type bits = sizeof(T) * BITS_PER_BYTE) throw (bit_read_exception)
+				template <typename T> void read(T & v, size_type bits = sizeof(T) * BITS_PER_BYTE) throw (exception)
 				{
 					if (bs == NULL) return;
-					if (pos + bits > bs->size()) throw bit_read_exception();
+					if (pos + bits > bs->size()) throw exception();
 					bs->get(v, pos, bits);
 					*this += bits;
 				}
@@ -305,9 +305,9 @@ template <typename Block, class Container = std::vector<Block> > class bitset
 		}
 
 		/// Reserves the number of bits within this set.
-		void reserve(size_type bits)
+		void reserve(size_type blocks)
 		{
-			extend(bits);
+			extend(blocks * BITS_PER_BLOCK);
 		}
 
 		/// Clears the bit set.
@@ -446,11 +446,11 @@ template <typename Block, class Container = std::vector<Block> > class bitset
 		///            bits the specified data type can hold.
 		///            If the number of bits is smaller than what the specified data can
 		///            hold, only the least significant bits are being set.
-		template <typename T> void get(T & v, size_type ofs, size_type bits = sizeof(T) * BITS_PER_BYTE) const throw (bit_read_exception)
+		template <typename T> void get(T & v, size_type ofs, size_type bits = sizeof(T) * BITS_PER_BYTE) const throw (exception)
 		{
 			if (bits <= 0) return;
 			if (bits > sizeof(T) * BITS_PER_BYTE) return; // impossible to read more bits than the specified container can hold
-			if (ofs + bits > pos) throw bit_read_exception();
+			if (ofs + bits > pos) throw exception();
 
 			v = T(); // clear result
 

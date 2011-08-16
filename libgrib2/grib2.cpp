@@ -1,25 +1,28 @@
 #include <grib2.hpp>
-#include <octets.hpp>
 #include <iostream>
+//#include <octets.hpp>
+#include <bitset.hpp>
 
 // http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc.shtml
 
 namespace grib2 {
 
-static void unpack(std::istream &, indicator_section_t &) throw (grib2::exception);
-static void unpack(std::istream &, identification_section_t &) throw (grib2::exception);
-static void unpack(std::istream &, local_use_section_t &) throw (grib2::exception);
-static void unpack(std::istream &, grid_definition_section_t &) throw (grib2::exception);
-static void unpack(std::istream &, product_definition_section_t &) throw (grib2::exception);
-static void unpack(std::istream &, data_representation_section_t &) throw (grib2::exception);
-static void unpack(std::istream &, bitmap_section_t &) throw (grib2::exception);
-static void unpack(std::istream &, data_section_t &, const data_representation_section_t &) throw (grib2::exception);
+typedef bitset<uint8_t> octets;
 
-template <typename T> static void read(std::istream & is, T & value) throw (grib2::exception)
+static void unpack(std::istream &, indicator_section_t &) throw (std::exception);
+static void unpack(std::istream &, identification_section_t &) throw (std::exception);
+static void unpack(std::istream &, local_use_section_t &) throw (std::exception);
+static void unpack(std::istream &, grid_definition_section_t &) throw (std::exception);
+static void unpack(std::istream &, product_definition_section_t &) throw (std::exception);
+static void unpack(std::istream &, data_representation_section_t &) throw (std::exception);
+static void unpack(std::istream &, bitmap_section_t &) throw (std::exception);
+static void unpack(std::istream &, data_section_t &, const data_representation_section_t &) throw (std::exception);
+
+template <typename T> static void read(std::istream & is, T & value) throw (std::exception)
 {
 	octets buf;
 	buf.reserve(sizeof(T));
-	if (buf.append(is, sizeof(T)) != sizeof(T)) throw grib2::exception();
+	if (buf.append(is, sizeof(T)) != sizeof(T)) throw std::exception();
 	octets::const_iterator i = buf.begin();
 	i.read(value);
 }
@@ -124,20 +127,26 @@ int unpack(message_t & grib, std::istream & is)
 	} catch (octets::exception &) {
 		std::cerr << "OCTET READ EXCEPTION" << std::endl;
 		return -2;
-	} catch (grib2::exception &) {
-		std::cerr << "GRIB2 EXCEPTION" << std::endl;
+	} catch (grib2::not_implemented e) {
+		std::cerr << "NOT IMPLEMENTED: " << e.what() << std::endl;
+		return -1;
+	} catch (std::exception & e) {
+		std::cerr << "EXCEPTION: " << e.what() << std::endl;
+		return -1;
+	} catch (...) {
+		std::cerr << "UNKNOWN EXCEPTION" << std::endl;
 		return -1;
 	}
 	return 0;
 }
 
-static void unpack(std::istream & is, grib2::indicator_section_t & section) throw (grib2::exception)
+static void unpack(std::istream & is, grib2::indicator_section_t & section) throw (std::exception)
 {
 	uint16_t reserved;
 	grib2::octets buf;
 
 	buf.reserve(12); // ignoring "GRIB" indicator
-	if (buf.append(is, 12) != 12) throw grib2::exception();
+	if (buf.append(is, 12) != 12) throw std::exception();
 	grib2::octets::const_iterator i = buf.begin();
 	i.read(reserved);
 	i.read(section.discipline);
@@ -145,12 +154,12 @@ static void unpack(std::istream & is, grib2::indicator_section_t & section) thro
 	i.read(section.total_length);
 }
 
-static void unpack(std::istream & is, grib2::identification_section_t & section) throw (grib2::exception)
+static void unpack(std::istream & is, grib2::identification_section_t & section) throw (std::exception)
 {
 	grib2::octets buf;
 	grib2::octets::size_type length = section.length - sizeof(section.length) - sizeof(section.number);
 	buf.reserve(length);
-	if (buf.append(is, length) != length) throw grib2::exception();
+	if (buf.append(is, length) != length) throw std::exception();
 	grib2::octets::const_iterator i = buf.begin();
 
 	i.read(section.originating_center);
@@ -170,12 +179,12 @@ static void unpack(std::istream & is, grib2::identification_section_t & section)
 	// all additional data is reserved
 }
 
-static void unpack(std::istream & is, grib2::local_use_section_t & section) throw (grib2::exception)
+static void unpack(std::istream & is, grib2::local_use_section_t & section) throw (std::exception)
 {
 	grib2::octets buf;
 	grib2::octets::size_type length = section.length - sizeof(section.length) - sizeof(section.number);
 	buf.reserve(length);
-	if (buf.append(is, length) != length) throw grib2::exception();
+	if (buf.append(is, length) != length) throw std::exception();
 	section.data.clear();
 	grib2::octets::const_iterator i = buf.begin();
 
@@ -185,12 +194,42 @@ static void unpack(std::istream & is, grib2::local_use_section_t & section) thro
 	}
 }
 
-static void unpack(std::istream & is, grib2::grid_definition_section_t & section) throw (grib2::exception)
+static void unpack_GDS_3_0(grib2::octets::const_iterator & i, grib2::grid_definition_section_t & section) throw (std::exception)
+{
+	struct grib2::grid_definition_section_t::grid_def_t::lat_lon_t & t = section.grid_def.lat_lon;
+
+	i.read(t.shape_earth);
+	i.read(t.scale_factor_radius);
+	i.read(t.scale_value_radius);
+	i.read(t.scale_factor_major_axis);
+	i.read(t.scale_value_major_axis);
+	i.read(t.scale_factor_minor_axis);
+	i.read(t.scale_value_minor_axis);
+	i.read(t.num_parallel);
+	i.read(t.num_meridian);
+	i.read(t.basic_angle);
+	i.read(t.subdiv_basic_angle);
+	i.read(t.lat1);
+	i.read(t.lon1);
+	i.read(t.resolution);
+	i.read(t.lat2);
+	i.read(t.lon2);
+	i.read(t.di);
+	i.read(t.dj);
+	i.read(t.scanning_mode);
+
+	/*
+	TODO : 73-nn: List of number of points along each meridian or parallel
+	(These octets are only present for quasi-regular grids as described in notes 2 and 3)
+	*/
+}
+
+static void unpack(std::istream & is, grib2::grid_definition_section_t & section) throw (std::exception)
 {
 	grib2::octets buf;
 	grib2::octets::size_type length = section.length - sizeof(section.length) - sizeof(section.number);
 	buf.reserve(length);
-	if (buf.append(is, length) != length) throw grib2::exception();
+	if (buf.append(is, length) != length) throw std::exception();
 	grib2::octets::const_iterator i = buf.begin();
 
 	i.read(section.source);
@@ -201,7 +240,8 @@ static void unpack(std::istream & is, grib2::grid_definition_section_t & section
 
 	switch (section.grid_def_templ) { // TODO: table 3.1
 		case 0: // Latitude/Longitude (template 3.0)
-			// TODO
+			unpack_GDS_3_0(i, section);
+			break;
 		case 1: // Rotated Latitude/Longitude (template 3.1)
 		case 2: // Streched Latitude/Longitude (template 3.2)
 		case 3: // Rotated and Streched Latitude/Longitude (template 3.3)
@@ -228,20 +268,42 @@ static void unpack(std::istream & is, grib2::grid_definition_section_t & section
 		case 32768: // Rotated Latitude/Longitude (Arakawa Staggered E-Grid)(See Template 3.32768)
 		case 32769: // Rotated Latitude/Longitude (Arakawa Non-E Staggered Grid)(See Template 3.32769)
 		case 65535: // Missing
-			throw not_implemented();
+			throw not_implemented(__FILE__, __LINE__);
 			break;
-		default: throw exception();
+		default:
+			throw std::exception();
 	}
 
 	// TODO: optional list of numbers defineing number of points
 }
 
-static void unpack(std::istream & is, grib2::product_definition_section_t & section) throw (grib2::exception)
+static void unpack_PDS_4_0(grib2::octets::const_iterator & i, grib2::product_definition_section_t & section) throw (std::exception)
+{
+	struct grib2::product_definition_section_t::prod_def_t::info_t & t = section.prod_def.info;
+
+	i.read(t.param_category);
+	i.read(t.param_number);
+	i.read(t.type_gen_proc);
+	i.read(t.bg_gen_proc);
+	i.read(t.gen_proc_id);
+	i.read(t.hours_obs_data_cutoff);
+	i.read(t.minutes_obs_data_cutoff);
+	i.read(t.indicator_unit_of_timerange);
+	i.read(t.forecast_time);
+	i.read(t.type_first_fix_surf);
+	i.read(t.scale_factor_first_fix_surf);
+	i.read(t.scale_value_first_fix_surf);
+	i.read(t.type_second_fix_surf);
+	i.read(t.scale_factor_second_fix_surf);
+	i.read(t.scale_value_second_fix_surf);
+}
+
+static void unpack(std::istream & is, grib2::product_definition_section_t & section) throw (std::exception)
 {
 	grib2::octets buf;
 	grib2::octets::size_type length = section.length - sizeof(section.length) - sizeof(section.number);
 	buf.reserve(length);
-	if (buf.append(is, length) != length) throw grib2::exception();
+	if (buf.append(is, length) != length) throw std::exception();
 	grib2::octets::const_iterator i = buf.begin();
 
 	i.read(section.num_coord_values);
@@ -249,21 +311,24 @@ static void unpack(std::istream & is, grib2::product_definition_section_t & sect
 
 	switch (section.product_def_templ) { // TODO: table 4.0
 		case 0: // Analysis or forecast at a horizontal level or in a horizontal layer at a point in time.  (see Template 4.0)
-		// TODO: many more
-			throw not_implemented();
+			unpack_PDS_4_0(i, section);
 			break;
-		default: throw exception();
+		case 1:
+			// TODO: many more
+			throw not_implemented(__FILE__, __LINE__);
+		default:
+			throw std::exception();
 	}
 
 	// TODO: optional list of coordinate values
 }
 
-static void unpack(std::istream & is, grib2::data_representation_section_t & section) throw (grib2::exception)
+static void unpack(std::istream & is, grib2::data_representation_section_t & section) throw (std::exception)
 {
 	grib2::octets buf;
 	grib2::octets::size_type length = section.length - sizeof(section.length) - sizeof(section.number);
 	buf.reserve(length);
-	if (buf.append(is, length) != length) throw grib2::exception();
+	if (buf.append(is, length) != length) throw std::exception();
 	grib2::octets::const_iterator i = buf.begin();
 
 	i.read(section.num_datapoints);
@@ -281,7 +346,7 @@ static void unpack(std::istream & is, grib2::data_representation_section_t & sec
 		case 2: // Grid Point Data - Complex Packing (see Template 5.2)
 		case 3: // Grid Point Data - Complex Packing and Spatial Differencing (see Template 5.3)
 		case 4: // Grid Point Data - IEEE Floating Point Data (see Template 5.4)
-			throw not_implemented();
+			throw not_implemented(__FILE__, __LINE__);
 			break;
 		case 40: // Grid Point Data - JPEG2000 Compression (see Template 5.40)
 			i.read(section.templ.gp_jpeg2000.R);
@@ -307,18 +372,19 @@ static void unpack(std::istream & is, grib2::data_representation_section_t & sec
 		case 51: // Spectral Data - Complex Packing (see Template 5.51)
 		case 61: // Grid Point Data - Simple Packing With Logarithm Pre-processing
 		case 200: // Run Length Packing With Level Values (see Template 5.200)
-			throw not_implemented();
+			throw not_implemented(__FILE__, __LINE__);
 			break;
-		default: throw exception();
+		default:
+			throw std::exception();
 	}
 }
 
-static void unpack(std::istream & is, grib2::bitmap_section_t & section) throw (grib2::exception)
+static void unpack(std::istream & is, grib2::bitmap_section_t & section) throw (std::exception)
 {
 	grib2::octets buf;
 	grib2::octets::size_type length = section.length - sizeof(section.length) - sizeof(section.number);
 	buf.reserve(length);
-	if (buf.append(is, length) != length) throw grib2::exception();
+	if (buf.append(is, length) != length) throw std::exception();
 
 	grib2::octets::const_iterator i = buf.begin();
 
@@ -330,12 +396,14 @@ static void unpack(std::istream & is, grib2::bitmap_section_t & section) throw (
 	}
 }
 
-static void unpack(std::istream & is, data_section_t & section, const data_representation_section_t & drs) throw (grib2::exception)
+static void unpack(std::istream & is, data_section_t & section, const data_representation_section_t & drs) throw (std::exception)
 {
 	grib2::octets buf;
 	grib2::octets::size_type length = section.length - sizeof(section.length) - sizeof(section.number);
 	buf.reserve(length);
-	if (buf.append(is, length) != length) throw grib2::exception();
+	if (buf.append(is, length) != length) throw std::exception();
+
+std::cerr << __FILE__ << ":" << __LINE__ << ": DS::length=" << section.length << std::endl;
 
 	switch (drs.rep_templ) { // TODO; table 5.0
 		case 0: // Grid Point Data - Simple Packing (see Template 5.0)
@@ -349,9 +417,11 @@ static void unpack(std::istream & is, data_section_t & section, const data_repre
 		case 51: // Spectral Data - Complex Packing (see Template 5.51)
 		case 61: // Grid Point Data - Simple Packing With Logarithm Pre-processing
 		case 200: // Run Length Packing With Level Values (see Template 5.200)
-			throw not_implemented();
+			std::cerr << __PRETTY_FUNCTION__ << ":" << __LINE__ << ": value=" << drs.rep_templ << std::endl;
+			throw not_implemented(__FILE__, __LINE__);
 			break;
-		default: throw exception();
+		default:
+			throw std::exception();
 	}
 }
 

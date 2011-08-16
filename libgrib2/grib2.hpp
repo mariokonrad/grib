@@ -5,6 +5,9 @@
 #include <istream>
 #include <stdint.h>
 
+#include <string>
+#include <sstream>
+
 #if !defined(GRIB_MISSING_VALUE)
 #define GRIB_MISSING_VALUE (1.e30)
 #endif
@@ -132,7 +135,8 @@ struct grid_definition_section_t
 	uint8_t interpol_list;
 	uint16_t grid_def_templ;
 
-	union {
+	union grid_def_t
+	{
 		struct lat_lon_t // template 3.0
 		{
 			uint8_t shape_earth; // table 3.2
@@ -141,7 +145,7 @@ struct grid_definition_section_t
 			uint8_t scale_factor_major_axis;
 			uint32_t scale_value_major_axis;
 			uint8_t scale_factor_minor_axis;
-			uint32_t scale_factor_minor_axis;
+			uint32_t scale_value_minor_axis;
 			uint32_t num_parallel; // number of points along parallel
 			uint32_t num_meridian; // number of points along meridian
 			uint32_t basic_angle;
@@ -157,7 +161,7 @@ struct grid_definition_section_t
 			// TODO: list of number points along each meridian or parallel
 		} lat_lon;
 		// TODO
-	} templ;
+	} grid_def;
 };
 
 struct product_definition_section_t
@@ -166,6 +170,29 @@ struct product_definition_section_t
 	uint8_t number;
 	uint16_t num_coord_values;
 	uint16_t product_def_templ;
+
+	union prod_def_t
+	{
+		struct info_t
+		{
+			uint8_t param_category;
+			uint8_t param_number;
+			uint8_t type_gen_proc;
+			uint8_t bg_gen_proc;
+			uint8_t gen_proc_id;
+			uint16_t hours_obs_data_cutoff;
+			uint8_t minutes_obs_data_cutoff;
+			uint8_t indicator_unit_of_timerange;
+			uint32_t forecast_time;
+			uint8_t type_first_fix_surf;
+			uint8_t scale_factor_first_fix_surf;
+			uint32_t scale_value_first_fix_surf;
+			uint8_t type_second_fix_surf;
+			uint8_t scale_factor_second_fix_surf;
+			uint32_t scale_value_second_fix_surf;
+		} info;
+		// TODO
+	} prod_def;
 
 	// TODO
 };
@@ -243,9 +270,42 @@ struct message_t
 	data_section_t ds;
 };
 
-class exception {};
+class not_implemented : public std::exception
+{
+	private:
+		const char * file;
+		int line;
+		std::string text;
+	private:
+		void update()
+		{
+			std::ostringstream os;
+			os << file << ":" << line;
+			text = os.str();
+		}
+	public:
+		not_implemented()
+			: file("unknown")
+			, line(0)
+		{
+			update();
+		}
 
-class not_implemented {};
+		not_implemented(const char * file, int line)
+			: file(file)
+			, line(line)
+		{
+			update();
+		}
+
+		virtual ~not_implemented() throw ()
+		{}
+
+		virtual const char * what() const throw ()
+		{
+			return text.c_str();
+		}
+};
 
 int unpack(message_t &, std::istream &);
 
