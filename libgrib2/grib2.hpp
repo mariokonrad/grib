@@ -207,7 +207,11 @@ struct data_representation_section_t
 	union {
 		struct gp_simple_t // template 5.0
 		{
-			uint32_t R; // reference value
+			union {
+				uint32_t u;
+				float f;
+				uint8_t a[4];
+			} R; // IEEE-754 binary 32bit float: reference value
 			uint16_t E; // binary scale factor
 			uint16_t D; // decimal scale factor
 			uint8_t num_bits;
@@ -215,7 +219,11 @@ struct data_representation_section_t
 		} gp_simple;
 		struct gp_jpeg2000_t // templte 5.40
 		{
-			uint32_t R; // reference value
+			union {
+				uint32_t u;
+				float f;
+				uint8_t a[4];
+			} R; // IEEE-754 binary 32bit float: reference value
 			uint16_t E; // binary scale factor
 			uint16_t D; // decimal scale factor
 			uint8_t num_bits;
@@ -225,7 +233,11 @@ struct data_representation_section_t
 		} gp_jpeg2000;
 		struct gp_png_t // template 5.41
 		{
-			uint32_t R; // reference value
+			union {
+				uint32_t u;
+				float f;
+				uint8_t a[4];
+			} R; // IEEE-754 binary 32bit float: reference value
 			uint16_t E; // binary scale factor
 			uint16_t D; // decimal scale factor
 			uint8_t num_bits;
@@ -233,7 +245,11 @@ struct data_representation_section_t
 		} gp_png;
 		struct sd_simple_t // template 5.50
 		{
-			uint32_t R; // reference value
+			union {
+				uint32_t u;
+				float f;
+				uint8_t a[4];
+			} R; // IEEE-754 binary 32bit float: reference value
 			uint16_t E; // binary scale factor
 			uint16_t D; // decimal scale factor
 			uint8_t num_bits;

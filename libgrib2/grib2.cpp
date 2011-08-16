@@ -334,9 +334,13 @@ static void unpack(std::istream & is, grib2::data_representation_section_t & sec
 	i.read(section.num_datapoints);
 	i.read(section.rep_templ);
 
+	// TODO: proper handling of endianess (regarding the floats)
+
 	switch (section.rep_templ) { // table 5.0
 		case 0: // Grid Point Data - Simple Packing (see Template 5.0)
-			i.read(section.templ.gp_simple.R);
+			i.read(section.templ.gp_simple.R.u);
+			std::swap(section.templ.gp_simple.R.a[0], section.templ.gp_simple.R.a[3]);
+			std::swap(section.templ.gp_simple.R.a[1], section.templ.gp_simple.R.a[2]);
 			i.read(section.templ.gp_simple.E);
 			i.read(section.templ.gp_simple.D);
 			i.read(section.templ.gp_simple.num_bits);
@@ -349,21 +353,27 @@ static void unpack(std::istream & is, grib2::data_representation_section_t & sec
 			throw not_implemented(__FILE__, __LINE__);
 			break;
 		case 40: // Grid Point Data - JPEG2000 Compression (see Template 5.40)
-			i.read(section.templ.gp_jpeg2000.R);
+			i.read(section.templ.gp_jpeg2000.R.u);
+			std::swap(section.templ.gp_simple.R.a[0], section.templ.gp_simple.R.a[3]);
+			std::swap(section.templ.gp_simple.R.a[1], section.templ.gp_simple.R.a[2]);
 			i.read(section.templ.gp_jpeg2000.E);
 			i.read(section.templ.gp_jpeg2000.D);
 			i.read(section.templ.gp_jpeg2000.num_bits);
 			i.read(section.templ.gp_jpeg2000.type_org);
 			break;
 		case 41: // Grid Point Data - PNG Compression (see Template 5.41)
-			i.read(section.templ.gp_png.R);
+			i.read(section.templ.gp_png.R.u);
+			std::swap(section.templ.gp_simple.R.a[0], section.templ.gp_simple.R.a[3]);
+			std::swap(section.templ.gp_simple.R.a[1], section.templ.gp_simple.R.a[2]);
 			i.read(section.templ.gp_png.E);
 			i.read(section.templ.gp_png.D);
 			i.read(section.templ.gp_png.num_bits);
 			i.read(section.templ.gp_png.type_org);
 			break;
 		case 50: // Spectral Data - Simple Packing (see Template 5.50)
-			i.read(section.templ.sd_simple.R);
+			i.read(section.templ.sd_simple.R.u);
+			std::swap(section.templ.gp_simple.R.a[0], section.templ.gp_simple.R.a[3]);
+			std::swap(section.templ.gp_simple.R.a[1], section.templ.gp_simple.R.a[2]);
 			i.read(section.templ.sd_simple.E);
 			i.read(section.templ.sd_simple.D);
 			i.read(section.templ.sd_simple.num_bits);
@@ -407,6 +417,14 @@ std::cerr << __FILE__ << ":" << __LINE__ << ": DS::length=" << section.length <<
 
 	switch (drs.rep_templ) { // TODO; table 5.0
 		case 0: // Grid Point Data - Simple Packing (see Template 5.0)
+
+			// according to: http://www.wmo.int/pages/prog/www/WDM/Guides/Guide-binary-2.html
+			// y * 10^D = R + (x * 2^E) ==> y = (R + (x * 2^E)) * 10^(-D)
+
+			// y = pow(10.0, -D) * (R + (x * pow(2.0, E)));
+
+			throw not_implemented(__FILE__, __LINE__);
+			break;
 		case 1: // Matrix Value at Grid Point - Simple Packing (see Template 5.1)
 		case 2: // Grid Point Data - Complex Packing (see Template 5.2)
 		case 3: // Grid Point Data - Complex Packing and Spatial Differencing (see Template 5.3)

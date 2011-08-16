@@ -166,15 +166,13 @@ template <typename Block, class Container = std::vector<Block> > class bitset
 				template <typename T> void peek(T & v, size_type bits = sizeof(T) * BITS_PER_BYTE) const throw (exception)
 				{
 					if (bs == NULL) return;
-					if (pos + bits > bs->size()) return;
+					if (pos + bits > bs->size()) throw exception();
 					bs->get(v, pos, bits);
 				}
 
 				template <typename T> void read(T & v, size_type bits = sizeof(T) * BITS_PER_BYTE) throw (exception)
 				{
-					if (bs == NULL) return;
-					if (pos + bits > bs->size()) throw exception();
-					bs->get(v, pos, bits);
+					peek(v, bits);
 					*this += bits;
 				}
 		};
