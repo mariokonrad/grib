@@ -1,7 +1,6 @@
 #include <grib2.hpp>
 #include <iostream>
 #include <cmath>
-//#include <octets.hpp>
 #include <bitset.hpp>
 
 // http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc.shtml
@@ -200,6 +199,7 @@ static void unpack(std::istream & is, grib2::local_use_section_t & section) thro
 static void unpack_GDS_3_0(grib2::octets::const_iterator & i, grib2::grid_definition_section_t & section) throw (std::exception)
 {
 	struct grib2::grid_definition_section_t::grid_def_t::lat_lon_t & t = section.grid_def.lat_lon;
+	struct grib2::grid_definition_section_t::grid_def_t::calc_t & calc = section.grid_def.calc;
 
 	i.read(t.shape_earth);
 	i.read(t.scale_factor_radius);
@@ -221,12 +221,15 @@ static void unpack_GDS_3_0(grib2::octets::const_iterator & i, grib2::grid_defini
 	i.read(t.dj);
 	i.read(t.scanning_mode);
 
-	// TODO: calculate user-friendly coordinates, regarding the read parameters above (especially: lat0,lon0 / lat1,lon1)
-
 	/*
 	TODO : 73-nn: List of number of points along each meridian or parallel
 	(These octets are only present for quasi-regular grids as described in notes 2 and 3)
 	*/
+
+	calc.lat1 = static_cast<double>(t.lat1) * 1.0e-6;
+	calc.lon1 = static_cast<double>(t.lon1) * 1.0e-6;
+	calc.lat2 = static_cast<double>(t.lat2) * 1.0e-6;
+	calc.lon2 = static_cast<double>(t.lon2) * 1.0e-6;
 }
 
 static void unpack(std::istream & is, grib2::grid_definition_section_t & section) throw (std::exception)
@@ -243,7 +246,7 @@ static void unpack(std::istream & is, grib2::grid_definition_section_t & section
 	i.read(section.interpol_list);
 	i.read(section.grid_def_templ);
 
-	switch (section.grid_def_templ) { // TODO: table 3.1
+	switch (section.grid_def_templ) { // table 3.1
 		case 0: // Latitude/Longitude (template 3.0)
 			unpack_GDS_3_0(i, section);
 			break;
@@ -422,8 +425,6 @@ static void unpack_DS_5_0(grib2::octets::const_iterator & i, grib2::data_section
 	double decimal_scale = pow(10.0, -def.D);
 	double binary_scale = pow(2.0, def.E);
 
-std::cerr << __FILE__ << ":" << __LINE__ << ": pos=" << i.get_pos() << std::endl;
-std::cerr << __FILE__ << ":" << __LINE__ << ":  section.length=" << ((section.length-5)*grib2::octets::BITS_PER_BYTE) << "  #p=" << drs.num_datapoints << "  #bits=" << static_cast<int>(def.num_bits) << std::endl;
 
 	for (uint32_t dp = 0; dp < drs.num_datapoints; ++dp) {
 		i.read(t, def.num_bits);
@@ -435,7 +436,6 @@ std::cerr << __FILE__ << ":" << __LINE__ << ":  section.length=" << ((section.le
 std::cerr << __FILE__ << ":" << __LINE__ << ": " << val << "  D=" << def.D << " E=" << def.E << "  R=" << def.R.f << "  t=" << t << std::endl;
 		section.data.push_back(val);
 	}
-std::cerr << __FILE__ << ":" << __LINE__ << ": pos=" << i.get_pos() << std::endl;
 std::cerr << std::endl;
 }
 
@@ -447,7 +447,7 @@ static void unpack(std::istream & is, data_section_t & section, const data_repre
 	if (buf.append(is, length) != length) throw std::exception();
 	grib2::octets::const_iterator i = buf.begin();
 
-	switch (drs.rep_templ) { // TODO; table 5.0
+	switch (drs.rep_templ) { // table 5.0
 		case 0: // Grid Point Data - Simple Packing (see Template 5.0)
 			unpack_DS_5_0(i, section, drs);
 			break;

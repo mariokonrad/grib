@@ -160,7 +160,15 @@ struct grid_definition_section_t
 			uint8_t scanning_mode;
 			// TODO: list of number points along each meridian or parallel
 		} lat_lon;
-		// TODO
+
+		struct calc_t // user-friendly calculated information, derived from grib data
+		{
+			double lat1;
+			double lon1;
+			double lat2;
+			double lon2;
+		} calc;
+
 	} grid_def;
 };
 
