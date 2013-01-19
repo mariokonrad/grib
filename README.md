@@ -11,3 +11,8 @@ EXTERNAL RESOURCES
 - libpng-1.2.44.tar.gz
 - jasper-1.900.1.tar.gz
 
+LICENSE
+=======
+
+See LICENSE.txt
+
